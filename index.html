@@ -86,12 +86,17 @@ body.y1997-mode .pill-option { color:#0000ff!important; }
     display:grid;
     grid-template-columns:repeat(var(--site-columns), minmax(0, 1fr));
     gap:var(--grid-gap);
-    align-items:start;
+    align-items:stretch;
+    grid-auto-rows:1fr;
     width:100%;
 }
 
 .card {
     min-width:0;
+    height:100%;
+    box-sizing:border-box;
+    display:flex;
+    flex-direction:column;
     overflow:hidden;
     overflow-wrap:anywhere;
     word-break:normal;
@@ -158,6 +163,15 @@ body.y1997-mode .pill-option { color:#0000ff!important; }
 .grid[data-density="dense"] .alert-box {
     padding:0.4em 0.45em;
     font-size:0.78em;
+}
+
+
+.card .forecast-controls {
+    margin-top:auto;
+}
+
+.card .ten-day {
+    flex:0 0 auto;
 }
 
 /* DARK MODE */
@@ -776,7 +790,7 @@ function renderWeatherCard(card, loc, data, expectedRunId, signal){
         <div class="section-label">Tomorrow:</div>
         ${weatherText[codeTomorrow] || "Unknown"} (H ${tomorrowHigh} / L ${tomorrowLow})
 
-        <div style="margin-top:10px;">
+        <div class="forecast-controls" style="margin-top:auto;padding-top:10px;">
             <button class="tenDayBtn">Show 10-Day Forecast</button>
         </div>
 
