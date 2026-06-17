@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Weather Impact Dashboard</title>
+
+<style>
+/* BASE */
+body {
+    font-family: Arial, sans-serif;
+    background: #eef1f5;
+    padding: 20px;
+    margin: 0;
+    color: #222;
+    transition: background 0.4s, color 0.4s;
+}
+h1 { text-align:center;margin:0 0 15px 0;font-size:2em; }
+
+/* TOP CONTROLS + COLOR INFO BUTTON */
+.top-controls-wrapper { position:relative; }
+.color-info-btn {
+    position:absolute; right:0; top:-10px;
+    padding:6px 12px; background:#ddd; border:1px solid #777;
+    border-radius:6px; cursor:pointer; font-size:0.95em; z-index:20;
+}
+body.dark-mode .color-info-btn { background:#333;color:#eee;border-color:#999; }
+body.y1997-mode .color-info-btn {
+    background:#00ffff!important; border:3px outset #ff00ff!important;
+    font-family:"Comic Sans MS";
+}
+
+.top-controls {
+    display:flex; justify-content:center; align-items:center; gap:15px;
+    margin-bottom:20px; flex-wrap:wrap;
+}
+
+select {
+    font-size:1.1em; padding:6px 10px; border-radius:6px; border:1px solid #aaa;
+}
+.expand-all-btn {
+    padding:6px 12px; border:1px solid #555; border-radius:6px;
+    cursor:pointer; background:#ddd;
+}
+
+/* PILL */
+.pill-toggle {
+    position:relative; width:200px; height:40px; background:#ccc;
+    border-radius:50px; display:flex; align-items:center;
+    cursor:pointer; border:1px solid #888; user-select:none;
+}
+.pill-option { flex:1; text-align:center; font-weight:bold; z-index:2; color:#444; pointer-events:none; }
+.pill-option.active { color:black; }
+.pill-slider {
+    position:absolute; width:50%; height:calc(100% - 6px); top:3px; left:3px;
+    background:white; border-radius:50px; box-shadow:0 2px 6px rgba(0,0,0,0.25);
+    transition:transform .25s ease;
+}
+body.dark-mode .pill-toggle { background:#444!important; border-color:#666!important; }
+body.dark-mode .pill-slider { background:#777!important; }
+body.dark-mode .pill-option { color:#ddd!important; }
+body.dark-mode .pill-option.active { color:white!important; }
+
+/* 1997 pill */
+body.y1997-mode .pill-toggle {
+    background:#ffcc00!important; border:3px outset #ff00ff!important;
+    border-radius:0!important; font-family:"Comic Sans MS";
+}
+body.y1997-mode .pill-slider {
+    background:#00ffff!important; border-radius:0!important;
+    border:3px inset #ff00ff;
+}
+body.y1997-mode .pill-option { color:#0000ff!important; }
+
+/* GRID */
+.grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(350px,1fr));
+    gap:20px;
+}
+.card {
+    background:white; padding:16px; border-radius:12px;
+    box-shadow:0 3px 10px rgba(0,0,0,0.12);
+    border-left:12px solid #43a047;
+    transition:background .4s,color .4s,border-color .4s;
+}
+.city { font-size:1.35em; font-weight:bold; margin-bottom:4px; }
+.section-label { font-weight:bold; margin-top:6px; }
+.ten-day-entry { font-size:0.8em; margin:4px 0; }
+.loading-text { opacity:0.75; font-size:0.95em; }
+
+/* DARK MODE */
+body.dark-mode { background:#121212!important; color:#e6e6e6!important; }
+body.dark-mode .card { background:#1c1c1c!important; color:#f0f0f0!important; }
+body.dark-mode a { color:#9ecbff!important; }
+body.dark-mode .ten-day { background:#2a2a2a!important;color:#e6e6e6!important; }
+body.dark-mode #colorModal .content { background:#1d1d1d!important;color:white!important; }
+
+/* 1997 MODE */
+body.y1997-mode {
+    background:url('https://lukethemaker.com/Assets/bg_stars.gif') repeat!important;
+    background-attachment:fixed!important;
+    color:#00ff00!important; font-family:"Comic Sans MS";
+}
+body.y1997-mode h1 {
+    font-size:3.2em!important; font-weight:bold;
+    color:#ff00ff!important; text-shadow:2px 2px 0 #00ffff;
+}
+body.y1997-mode .card { border-radius:0!important; border:4px outset #ff00ff!important; }
+body.y1997-mode .card.red-mode { background:#e53935!important;color:white!important; }
+body.y1997-mode .card.yellow-mode { background:#fdd835!important;color:black!important; }
+body.y1997-mode .card.green-mode { background:#43a047!important;color:white!important; }
+
+body:not(.y1997-mode) .card.red-mode { border-left-color:#e53935!important; }
+body:not(.y1997-mode) .card.yellow-mode { border-left-color:#fdd835!important; }
+body:not(.y1997-mode) .card.green-mode { border-left-color:#43a047!important; }
+
+/* MODAL */
+#colorModal {
+    display:none; position:fixed; left:0; top:0; width:100%; height:100%;
+    background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:9999;
+}
+#colorModal .content {
+    background:white; color:black; padding:20px; border-radius:8px;
+    width:360px; max-height:80vh; overflow-y:auto;
+}
+
+/* THEME BUTTONS */
+.theme-switcher { text-align:center; margin-top:20px; }
+.theme-switcher button {
+    padding:8px 14px; margin:5px; font-size:1em;
+    border-radius:6px; background:#eee; cursor:pointer; border:1px solid #aaa;
+}
+
+/* NWS ALERT BOX */
+.alert-box{
+    margin-top:10px;
+    padding:8px 10px;
+    border-radius:8px;
+    font-size:0.9em;
+    border:1px solid rgba(0,0,0,0.15);
+    background:#fff3cd;
+    color:#664d03;
+}
+body.dark-mode .alert-box{
+    background:#3a2f12!important;
+    color:#f5e6b2!important;
+    border-color:#6b5a2d!important;
+}
+body.y1997-mode .alert-box{
+    background:#ffff00!important;
+    color:#0000ff!important;
+    border:3px outset #ff00ff!important;
+    border-radius:0!important;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Weather Impact Dashboard</h1>
+
+<div class="top-controls-wrapper">
+    <button class="color-info-btn" onclick="openColorModal()">Color Info</button>
+
+    <div class="top-controls">
+        <div class="pill-toggle" id="planningToggle">
+            <div class="pill-slider"></div>
+            <div class="pill-option active">Daily</div>
+            <div class="pill-option">10-Day</div>
+        </div>
+
+        <!-- This dropdown is populated automatically from SITE_CATEGORIES below. -->
+        <select id="groupSelector"></select>
+
+        <button id="expandAll" class="expand-all-btn">Expand All 10-Day</button>
+    </div>
+</div>
+
+<div id="weatherGrid" class="grid"></div>
+
+<script>
+/* WEATHER DICTIONARIES */
+const weatherText={0:"Clear skies",1:"Mainly clear",2:"Partly cloudy",3:"Overcast",
+45:"Foggy",48:"Icy fog",51:"Light drizzle",53:"Drizzle",55:"Heavy drizzle",
+56:"Freezing drizzle",57:"Heavy freezing drizzle",61:"Light rain",63:"Rain",
+65:"Heavy rain",66:"Light freezing rain",67:"Freezing rain",71:"Light snow",
+73:"Snow",75:"Heavy snow",77:"Snow grains",80:"Light rain showers",
+81:"Rain showers",82:"Heavy rain showers",85:"Light snow showers",
+86:"Snow showers",95:"Thunderstorms",96:"Thunderstorms with hail",
+99:"Severe thunderstorms with hail"};
+
+const weatherIcon={0:"☀️",1:"🌤",2:"⛅",3:"☁️",45:"🌫",48:"🌫",
+51:"🌦",53:"🌦",55:"🌧",56:"🌧",57:"🌧",61:"🌧",63:"🌧",
+65:"🌧",66:"🌧",67:"🌧",71:"❄️",73:"❄️",75:"❄️",77:"❄️",
+80:"🌦",81:"🌧",82:"🌧",85:"❄️",86:"❄️",95:"⛈",96:"⛈",99:"⛈"};
+
+/* =========================
+   SITE CATEGORIES + SITES
+   This is the main place to add, remove, rename, or edit sites.
+
+   To add a category:
+   1. Add a new key under SITE_CATEGORIES.
+   2. Give it a label.
+   3. Add sites with name, lat, and lon.
+
+   To add a site:
+   Add another line like:
+   { name:"City, ST", lat:00.000, lon:-00.000 }
+========================= */
+const SITE_CATEGORIES = {
+    accountManagement: {
+        label: "Account Management",
+        sites: [
+            {name:"Albany, NY",lat:42.6526,lon:-73.7562},
+            {name:"Charlotte, NC",lat:35.2271,lon:-80.8431},
+            {name:"Cincinnati, OH",lat:39.1031,lon:-84.5120},
+            {name:"Colorado Springs, CO",lat:38.8339,lon:-104.8214},
+            {name:"Fond du Lac, WI",lat:43.775,lon:-88.4388},
+            {name:"Irving, TX",lat:32.814,lon:-96.9489},
+            {name:"McAllen, TX",lat:26.2034,lon:-98.23},
+            {name:"Portland, OR",lat:45.5051,lon:-122.675},
+            {name:"Rochester, NY",lat:43.1566,lon:-77.6088},
+            {name:"Vancouver, WA",lat:45.6366,lon:-122.6615},
+            {name:"Zanesville, OH",lat:39.9403,lon:-82.0132}
+        ]
+    },
+
+    accountManagementChat: {
+        label: "Account Management Chat",
+        sites: [
+            {name:"El Paso, TX", lat:31.761, lon:-106.485},
+            {name:"Rochester, NY", lat:43.1566, lon:-77.6088},
+            {name:"Zanesville, OH", lat:39.9403, lon:-82.0132}
+        ]
+    },
+
+    crcs: {
+        label: "CRCS",
+        sites: [
+            {name:"Morrisville, NC", lat:35.822, lon:-78.826}
+        ]
+    },
+
+    mobileBilling: {
+        label: "Mobile Billing",
+        sites: [
+            {name:"Albany, NY", lat:42.6526, lon:-73.7562},
+            {name:"McAllen, TX", lat:26.2034, lon:-98.23},
+            {name:"Rochester, NY", lat:43.1566, lon:-77.6088},
+            {name:"Vancouver, WA", lat:45.6366, lon:-122.6615}
+        ]
+    },
+
+    mobileRepair: {
+        label: "Mobile Repair",
+        sites: [
+            {name:"Amherst, NY", lat:42.978, lon:-78.800},
+            {name:"Cleveland, OH", lat:41.499, lon:-81.694},
+            {name:"Kansas City, MO", lat:39.099, lon:-94.578},
+            {name:"McAllen, TX", lat:26.2034, lon:-98.23},
+            {name:"St. Petersburg, FL", lat:27.767, lon:-82.640}
+        ]
+    },
+
+    repairChat: {
+        label: "Repair Chat",
+        sites: [
+            {name:"Bridgeton, MO",lat:38.767,lon:-90.411},
+            {name:"El Paso, TX",lat:31.761,lon:-106.485},
+            {name:"Louisville, KY",lat:38.252,lon:-85.758},
+            {name:"Morrisville, NC",lat:35.822,lon:-78.826}
+        ]
+    },
+
+    scsEnglishBilling: {
+        label: "SCS English Billing",
+        sites: [
+            {name:"Greensboro, NC", lat:36.072, lon:-79.792},
+            {name:"San Diego, CA", lat:32.716, lon:-117.161}
+        ]
+    },
+
+    serviceability: {
+        label: "Serviceability",
+        sites: [
+            {name:"San Antonio, TX", lat:29.425, lon:-98.494},
+            {name:"St. Ann, MO", lat:38.727, lon:-90.385},
+            {name:"West Columbia, SC", lat:33.994, lon:-81.074}
+        ]
+    },
+
+    smbSpb: {
+        label: "SMB/SPB",
+        sites: [
+            {name:"Charlotte, NC", lat:35.2271, lon:-80.8431},
+            {name:"Louisville, KY", lat:38.252, lon:-85.758},
+            {name:"Austin, TX", lat:30.267, lon:-97.743}
+        ]
+    },
+
+    technicalSupport: {
+        label: "Technical Support",
+        sites: [
+            {name:"Bridgeton, MO",lat:38.767,lon:-90.411},
+            {name:"Canton, OH",lat:40.798,lon:-81.378},
+            {name:"Cheektowaga, NY",lat:42.903,lon:-78.754},
+            {name:"Columbus, OH",lat:39.961,lon:-82.999},
+            {name:"El Paso, TX",lat:31.761,lon:-106.485},
+            {name:"Flushing, NY",lat:40.765,lon:-73.824},
+            {name:"Greensboro, NC",lat:36.072,lon:-79.792},
+            {name:"Louisville, KY",lat:38.252,lon:-85.758},
+            {name:"Middletown, NY",lat:41.445,lon:-74.422},
+            {name:"Morrisville, NC",lat:35.822,lon:-78.826},
+            {name:"Orlando, FL",lat:28.538,lon:-81.379},
+            {name:"San Antonio, TX",lat:29.425,lon:-98.494},
+            {name:"St. Petersburg, FL",lat:27.767,lon:-82.640}
+        ]
+    }
+};
+
+/* =========================
+   APP STATE
+========================= */
+const DEFAULT_CATEGORY_KEY = "technicalSupport";
+
+let currentCategoryKey = DEFAULT_CATEGORY_KEY;
+let currentGroup = SITE_CATEGORIES[currentCategoryKey].sites;
+let planningMode = "daily";
+let loadRunId = 0;
+
+/* =========================
+   CATEGORY DROPDOWN
+========================= */
+function populateCategoryDropdown(){
+    const selector = document.getElementById("groupSelector");
+    selector.innerHTML = "";
+
+    Object.entries(SITE_CATEGORIES)
+        .sort((a,b) => a[1].label.localeCompare(b[1].label))
+        .forEach(([key, category]) => {
+            const option = document.createElement("option");
+            option.value = key;
+            option.textContent = category.label;
+            option.selected = key === currentCategoryKey;
+            selector.appendChild(option);
+        });
+}
+
+/* =========================
+   72H SNOW THRESHOLD
+   Open-Meteo hourly snowfall is typically centimeters. Convert to inches.
+========================= */
+function snowCmToIn(cm){ return (cm || 0) / 2.54; }
+
+function sumSnowInchesWindow(hourDates, hourlySnow, now, hoursBack){
+    let total = 0;
+    for(let i=0;i<hourDates.length;i++){
+        const diff = (now - hourDates[i]) / 3600000;
+        if(diff >= 0 && diff <= hoursBack){
+            total += snowCmToIn(hourlySnow[i]);
+        }
+    }
+    return total;
+}
+
+/* =========================
+   NWS ALERT OVERRIDE
+   - Any active alert => Yellow
+   - If alert matches redEvents => Red
+========================= */
+function classifyNWSEvent(eventName){
+    const e = (eventName || "").toLowerCase();
+    const redEvents = [
+        "blizzard warning",
+        "ice storm warning",
+        "winter storm warning",
+        "snow squall warning"
+    ];
+    if(redEvents.some(x => e.includes(x))) return "red";
+    return null;
+}
+
+async function fetchNWSAlertSummary(lat, lon){
+    try{
+        const url = `https://api.weather.gov/alerts/active?point=${lat},${lon}`;
+        const r = await fetch(url, {
+            headers: {
+                "User-Agent": "WeatherImpactDashboard (browser)",
+                "Accept": "application/geo+json"
+            }
+        });
+        if(!r.ok) return null;
+
+        const ignoredNWSEvents = [
+            "rip current statement",
+            "rip current risk",
+            "rip current advisory",
+            "beach hazards statement",
+            "small craft advisory",
+            "coastal flood advisory",
+            "costal flood advisory"
+        ];
+
+        const d = await r.json();
+        const features = (d && d.features ? d.features : []).filter(f => {
+            const e = (f?.properties?.event || "").toLowerCase();
+            return !ignoredNWSEvents.some(x => e.includes(x));
+        });
+
+        if(!features.length) return null;
+
+        let best = {
+            level: "yellow",
+            headline: (features[0]?.properties?.headline)
+                      || (features[0]?.properties?.event)
+                      || "Active NWS Alert"
+        };
+
+        for(const f of features){
+            const p = f?.properties || {};
+            const event = p.event || "";
+            const level = classifyNWSEvent(event);
+
+            if(level === "red"){
+                best = {
+                    level: "red",
+                    headline: p.headline || event || "Active NWS Alert"
+                };
+                break;
+            }
+
+            if(p.headline || p.event){
+                best.headline = p.headline || p.event;
+            }
+        }
+
+        return best;
+    }catch(e){
+        return null;
+    }
+}
+
+/* IMPACT CALCULATIONS */
+function dominantWeather(codes){
+    if(!codes || !codes.length) return 0;
+
+    const f = {};
+    for(const x of codes){
+        f[x] = (f[x] || 0) + 1;
+    }
+
+    return +Object.keys(f).reduce((a,b) => f[a] >= f[b] ? a : b);
+}
+
+function impactFromConditions(codeNow, snow72In, temp){
+    if(temp<=10) return "red";
+    if([56,57,66,67].includes(codeNow)) return "red";
+    if(snow72In >= 3) return "red";
+    if([95,96,99].includes(codeNow)) return "red";
+
+    if([71,73,75,85,86,45,48].includes(codeNow)) return "yellow";
+    if(temp<=32 && [61,63,65,80,81,82].includes(codeNow)) return "yellow";
+
+    return "green";
+}
+
+function otImpactFromTenDay(codes, highs, lows){
+    let red=false,yellow=false;
+
+    for(let i=0;i<11;i++){
+        const code = codes[i];
+        const lo = lows[i];
+
+        if([56,57,66,67,75,82,86,95,96,99].includes(code)) red=true;
+        if(lo<=10) red=true;
+
+        if([71,73,77,85,45,48].includes(code)) yellow=true;
+        if(lo<=32 && [61,63,65,80,81].includes(code)) yellow=true;
+    }
+
+    return red ? "red" : yellow ? "yellow" : "green";
+}
+
+/* FULL WEATHER CARD */
+async function loadWeatherCard(card, loc, expectedRunId){
+    try{
+        const now = new Date();
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&hourly=temperature_2m,weather_code,snowfall&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,snowfall_sum&forecast_days=16&temperature_unit=fahrenheit&timezone=auto`;
+
+        /*
+           Fetch weather and NWS alert together.
+           This makes each card faster than waiting for weather first, then alert second.
+        */
+        const [data, nws] = await Promise.all([
+            fetch(url).then(r => {
+                if(!r.ok) throw new Error("Open-Meteo request failed");
+                return r.json();
+            }),
+            fetchNWSAlertSummary(loc.lat, loc.lon)
+        ]);
+
+        /*
+           If the user changed category or mode while requests were still running,
+           skip drawing stale results into the page.
+        */
+        if(expectedRunId !== loadRunId) return;
+
+        const codeNow = data.current.weather_code;
+        const tempNow = Math.round(data.current.temperature_2m);
+
+        const codeToday = data.daily.weather_code[0];
+        const codeTomorrow = data.daily.weather_code[1];
+        const todayHigh = Math.round(data.daily.temperature_2m_max[0]);
+        const todayLow = Math.round(data.daily.temperature_2m_min[0]);
+        const tomHigh = Math.round(data.daily.temperature_2m_max[1]);
+        const tomLow = Math.round(data.daily.temperature_2m_min[1]);
+
+        const hours = data.hourly.time.map(t => new Date(t));
+        const hSnow = data.hourly.snowfall;
+        const hCodes = data.hourly.weather_code;
+        const hTemps = data.hourly.temperature_2m;
+
+        const snow72In = sumSnowInchesWindow(hours, hSnow, now, 72);
+
+        const last6Codes=[], last6Temps=[], next6Codes=[], next6Temps=[];
+        for(let i=0;i<hours.length;i++){
+            const diff=(now-hours[i])/3600000;
+            if(diff<=6&&diff>=0){ last6Codes.push(hCodes[i]); last6Temps.push(hTemps[i]); }
+            if(diff<0&&diff>=-6){ next6Codes.push(hCodes[i]); next6Temps.push(hTemps[i]); }
+        }
+
+        const last6Dom=dominantWeather(last6Codes);
+        const next6Dom=dominantWeather(next6Codes);
+        const last6Avg=last6Temps.length?Math.round(last6Temps.reduce((a,b)=>a+b)/last6Temps.length):0;
+        const next6Avg=next6Temps.length?Math.round(next6Temps.reduce((a,b)=>a+b)/next6Temps.length):0;
+
+        let impact = (planningMode==="daily")
+            ? impactFromConditions(codeNow, snow72In, tempNow)
+            : otImpactFromTenDay(
+                data.daily.weather_code.slice(0,11),
+                data.daily.temperature_2m_max.slice(0,11),
+                data.daily.temperature_2m_min.slice(0,11)
+            );
+
+        /* NWS override wins */
+        if(nws && nws.level){
+            impact = nws.level;
+        }
+
+        card.className = "card " + impact + "-mode";
+
+        card.innerHTML = `
+            <div class="city">${loc.name}</div>
+            <div style="font-size:0.85em;">
+                <a target="_blank" href="https://forecast.weather.gov/MapClick.php?lat=${loc.lat}&lon=${loc.lon}">
+                    More info
+                </a>
+            </div>
+
+            ${nws ? `<div class="alert-box"><b>Active NWS Alert:</b> ${nws.headline}</div>` : ``}
+
+            <div class="section-label">Right Now:</div>
+            <span style="font-size:1.3em;">${weatherIcon[codeNow]||""}</span>
+            ${weatherText[codeNow] || "Unknown"}, ${tempNow}°F
+
+            <div class="section-label">Last 6 Hours:</div>
+            ${weatherText[last6Dom] || "Unknown"} — ${last6Avg}°F
+
+            <div class="section-label">Next 6 Hours:</div>
+            ${weatherText[next6Dom] || "Unknown"} — ${next6Avg}°F
+
+            <div class="section-label">Today:</div>
+            ${weatherText[codeToday] || "Unknown"} (H ${todayHigh} / L ${todayLow})
+
+            <div class="section-label">Tomorrow:</div>
+            ${weatherText[codeTomorrow] || "Unknown"} (H ${tomHigh} / L ${tomLow})
+
+            <div style="margin-top:10px;">
+                <button class="tenDayBtn">Show 10-Day Forecast</button>
+            </div>
+
+            <div class="ten-day"></div>
+        `;
+
+        const btn = card.querySelector(".tenDayBtn");
+        const panel = card.querySelector(".ten-day");
+        btn.onclick = () => togglePanel(panel, btn, data);
+
+    }catch(e){
+        if(expectedRunId !== loadRunId) return;
+
+        card.className = "card yellow-mode";
+        card.innerHTML = `
+            <div class="city">${loc.name}</div>
+            <div class="alert-box">
+                <b>Weather unavailable:</b> Could not load weather data for this site.
+            </div>
+            <div style="font-size:0.85em;margin-top:8px;">
+                <a target="_blank" href="https://forecast.weather.gov/MapClick.php?lat=${loc.lat}&lon=${loc.lon}">
+                    More info
+                </a>
+            </div>
+        `;
+    }
+}
+
+/* LOAD WEATHER FOR CURRENT GROUP
+   Cards are created immediately, then all sites load in parallel.
+*/
+async function loadWeather(){
+    const runId = ++loadRunId;
+    const grid = document.getElementById("weatherGrid");
+    grid.innerHTML = "";
+
+    const cards = currentGroup.map(loc => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+            <div class="city">${loc.name}</div>
+            <div class="loading-text">Loading weather...</div>
+        `;
+        grid.appendChild(card);
+        return {card, loc};
+    });
+
+    await Promise.allSettled(
+        cards.map(({card, loc}) => loadWeatherCard(card, loc, runId))
+    );
+
+    if(runId === loadRunId){
+        updateExpandButtonState();
+    }
+}
+
+/* EXPAND/COLLAPSE 10 DAY */
+function togglePanel(panel, btn, data){
+    if(panel.style.display==="block"){
+        panel.style.display="none";
+        btn.textContent="Show 10-Day Forecast";
+        updateExpandButtonState();
+        return;
+    }
+
+    let html="";
+    for(let d=0; d<=10; d++){
+        /*
+           Date strings from daily.time are YYYY-MM-DD.
+           Creating from split parts prevents browser timezone shifting.
+        */
+        const parts = data.daily.time[d].split("-").map(Number);
+        const date = new Date(parts[0], parts[1] - 1, parts[2]);
+
+        const label = date.toLocaleDateString("en-US", {
+            weekday:"short", month:"short", day:"numeric"
+        });
+
+        html += `
+        <div class="ten-day-entry">
+            <b>${label}:</b>
+            ${weatherText[data.daily.weather_code[d]] || "Unknown"}
+            — High ${Math.round(data.daily.temperature_2m_max[d])}
+            / Low ${Math.round(data.daily.temperature_2m_min[d])}
+        </div>`;
+    }
+
+    panel.innerHTML=html;
+    panel.style.display="block";
+    btn.textContent="Hide 10-Day Forecast";
+    updateExpandButtonState();
+}
+
+function updateExpandButtonState(){
+    const open=[...document.querySelectorAll(".ten-day")].some(p=>p.style.display==="block");
+    document.getElementById("expandAll").textContent=open?"Collapse All 10-Day":"Expand All 10-Day";
+}
+
+document.getElementById("expandAll").onclick=()=>{
+    const panels=document.querySelectorAll(".ten-day");
+    const btns=document.querySelectorAll(".tenDayBtn");
+    const open=[...panels].some(p=>p.style.display==="block");
+
+    if(open){
+        panels.forEach((p,i)=>{
+            p.style.display="none";
+            if(btns[i]) btns[i].textContent="Show 10-Day Forecast";
+        });
+    } else {
+        btns.forEach(btn=>btn.click());
+    }
+
+    updateExpandButtonState();
+};
+
+/* GROUP SELECTOR */
+document.getElementById("groupSelector").onchange = function () {
+    currentCategoryKey = this.value;
+    currentGroup = SITE_CATEGORIES[currentCategoryKey].sites;
+    loadWeather();
+};
+
+/* PILL LOGIC */
+const pill=document.getElementById("planningToggle");
+const slider=pill.querySelector(".pill-slider");
+const pillOps=pill.querySelectorAll(".pill-option");
+
+pill.onclick=()=>{
+    planningMode=(planningMode==="daily")?"ot":"daily";
+
+    pillOps.forEach(o=>o.classList.remove("active"));
+    pillOps[ planningMode==="daily"?0:1 ].classList.add("active");
+
+    slider.style.transform=(planningMode==="daily")?"translateX(0%)":"translateX(100%)";
+    loadWeather();
+};
+
+/* THEME SWITCHER */
+function setTheme(m){
+    document.body.classList.remove("light-mode","dark-mode","y1997-mode");
+
+    if(m==="light") document.body.classList.add("light-mode");
+    if(m==="dark") document.body.classList.add("dark-mode");
+    if(m==="1997") document.body.classList.add("y1997-mode");
+
+    localStorage.setItem("weatherTheme",m);
+}
+setTheme(localStorage.getItem("weatherTheme")||"light");
+
+/* INITIAL LOAD */
+populateCategoryDropdown();
+loadWeather();
+</script>
+
+<!-- MODAL -->
+<div id="colorModal">
+    <div class="content">
+        <span id="closeModal" style="cursor:pointer;float:right;font-size:1.3em;font-weight:bold;">×</span>
+        <h3 id="colorTitle">Color Status Definitions</h3>
+
+        <div id="dailyDefs">
+            <p><b style="color:#e53935;">RED — Severe Impact</b></p>
+            <ul>
+                <li>Temperature less than 10°F</li>
+                <li>Freezing precipitation</li>
+                <li>More than 3” snowfall in last 72 hrs</li>
+                <li>Severe storms</li>
+            </ul>
+
+            <p><b style="color:#fdd835;">YELLOW — Minor Impact</b></p>
+            <ul>
+                <li>Light snow</li>
+                <li>Fog / visibility issues</li>
+                <li>Rain + freezing-risk temps</li>
+                <li>Any active NWS alert</li>
+            </ul>
+
+            <p><b style="color:#43a047;">GREEN — No Impact</b></p>
+        </div>
+
+        <div id="otDefs" style="display:none;">
+            <p><b style="color:#e53935;">RED — Severe Weather in Next 10 Days</b></p>
+            <ul>
+                <li>Freezing precipitation</li>
+                <li>Heavy snow or storms</li>
+                <li>Temps ≤10°F</li>
+            </ul>
+
+            <p><b style="color:#fdd835;">YELLOW — Moderate Risk</b></p>
+            <ul>
+                <li>Light snow</li>
+                <li>Fog</li>
+                <li>Freeze-risk temps + rain</li>
+                <li>Any active NWS alert</li>
+            </ul>
+
+            <p><b style="color:#43a047;">GREEN — No Expected Issues</b></p>
+        </div>
+    </div>
+</div>
+
+<script>
+function openColorModal(){
+    const d=document.getElementById("dailyDefs");
+    const o=document.getElementById("otDefs");
+
+    if(planningMode==="daily"){
+        d.style.display="block";
+        o.style.display="none";
+        document.getElementById("colorTitle").textContent="Daily Color Status Definitions";
+    } else {
+        d.style.display="none";
+        o.style.display="block";
+        document.getElementById("colorTitle").textContent="OT Color Status Definitions";
+    }
+
+    document.getElementById("colorModal").style.display="flex";
+}
+
+document.getElementById("closeModal").onclick=()=>document.getElementById("colorModal").style.display="none";
+document.getElementById("colorModal").onclick=(e)=>{ if(e.target.id==="colorModal") e.target.style.display="none"; };
+</script>
+
+<!-- THEME BUTTONS -->
+<div class="theme-switcher">
+    <button onclick="setTheme('light')">Light Mode</button>
+    <button onclick="setTheme('dark')">Dark Mode</button>
+    <button onclick="setTheme('1997')">1997</button>
+
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8333736812812145"
+     crossorigin="anonymous"></script>
+</div>
+
+</body>
+</html>
