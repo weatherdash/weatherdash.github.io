@@ -568,17 +568,6 @@ const IMPACT_RULES = {
    For an ambiguous city, add a ZIP code:
 
        springfieldMO: {name:"Springfield, MO", zip:"65806"},
-
-   If the display name is not a normal "City, ST" name, provide search/state:
-
-       denverOffice: {name:"Denver Office", search:"Denver", state:"CO"},
-
-   Manual coordinates are still supported as an optional override:
-
-       remoteOffice: {name:"Remote Office", lat:39.7392, lon:-104.9903},
-
-   Existing sites keep their known coordinates for maximum speed. New sites
-   may omit lat/lon and will be geocoded automatically.
 ========================= */
 const SITES = {
     albanyNY:          {name:"Albany, NY", lat:42.6526, lon:-73.7562},
@@ -611,7 +600,6 @@ const SITES = {
     stPetersburgFL:    {name:"St. Petersburg, FL", lat:27.767, lon:-82.640},
     vancouverWA:       {name:"Vancouver, WA", lat:45.6366, lon:-122.6615},
     westColumbiaSC:    {name:"West Columbia, SC", lat:33.994, lon:-81.074},
-    munfordvilleKY:    {name:"Munfordville, KY"},
     zanesvilleOH:      {name:"Zanesville, OH", lat:39.9403, lon:-82.0132},
 };
 
@@ -632,7 +620,7 @@ const SITE_CATEGORIES = {
 
     accountManagementChat: {
         label: "Account Management Chat",
-        siteIds: ["elPasoTX", "rochesterNY", "zanesvilleOH", "munfordvilleKY"]
+        siteIds: ["elPasoTX", "rochesterNY", "zanesvilleOH"]
     },
 
     crcs: {
