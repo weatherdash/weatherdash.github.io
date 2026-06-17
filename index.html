@@ -230,37 +230,88 @@ body:not(.y1997-mode) .card.red-mode { border-left-color:#e53935!important; }
 body:not(.y1997-mode) .card.yellow-mode { border-left-color:#fdd835!important; }
 body:not(.y1997-mode) .card.green-mode { border-left-color:#43a047!important; }
 
-/* MODAL */
+/* INFO MODAL */
 #colorModal {
-    display:none; position:fixed; left:0; top:0; width:100%; height:100%;
-    background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:9999;
-}
-#colorModal .content {
-    background:white; color:black; padding:20px; border-radius:8px;
-    width:360px; max-height:80vh; overflow-y:auto;
+    display:none;
+    position:fixed;
+    inset:0;
+    padding:20px;
+    background:rgba(0,0,0,0.72);
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    box-sizing:border-box;
 }
 
-/* FIXED BOTTOM THEME BAR */
-body {
-    padding-bottom:76px;
+#colorModal .content {
+    position:relative;
+    box-sizing:border-box;
+    width:min(680px, 100%);
+    max-height:90vh;
+    overflow-y:auto;
+    background:white;
+    color:black;
+    padding:24px;
+    border-radius:10px;
+    box-shadow:0 12px 40px rgba(0,0,0,0.35);
+}
+
+#colorModal h2 {
+    margin:0 36px 14px 0;
+}
+
+#colorModal h3 {
+    margin:22px 0 8px;
+}
+
+#colorModal p {
+    margin:0 0 12px;
+    line-height:1.45;
+}
+
+#colorModal ul {
+    margin:6px 0 14px;
+    padding-left:22px;
+}
+
+#colorModal li {
+    margin:4px 0;
+}
+
+#closeModal {
+    position:absolute;
+    top:12px;
+    right:16px;
+    border:0;
+    background:transparent;
+    color:inherit;
+    cursor:pointer;
+    font-size:1.7em;
+    line-height:1;
+}
+
+.info-status {
+    margin-top:16px;
+    padding-top:2px;
+}
+
+.info-status-title {
+    margin:14px 0 4px;
+    font-weight:bold;
+}
+
+.info-theme-section {
+    margin-top:22px;
+    padding-top:16px;
+    border-top:1px solid rgba(0,0,0,0.2);
 }
 
 .theme-switcher {
-    position:fixed;
-    left:0;
-    right:0;
-    bottom:0;
-    z-index:9000;
     display:flex;
-    justify-content:center;
     align-items:center;
     gap:8px;
-    padding:10px 12px;
-    margin:0;
-    background:rgba(238,241,245,0.96);
-    border-top:1px solid rgba(0,0,0,0.18);
-    box-shadow:0 -3px 12px rgba(0,0,0,0.12);
-    backdrop-filter:blur(6px);
+    flex-wrap:wrap;
+    margin-top:8px;
 }
 
 .theme-switcher button {
@@ -273,9 +324,13 @@ body {
     border:1px solid #aaa;
 }
 
-body.dark-mode .theme-switcher {
-    background:rgba(18,18,18,0.96)!important;
-    border-top-color:#555!important;
+body.dark-mode #colorModal .content {
+    background:#1d1d1d!important;
+    color:white!important;
+}
+
+body.dark-mode .info-theme-section {
+    border-top-color:#555;
 }
 
 body.dark-mode .theme-switcher button {
@@ -284,11 +339,16 @@ body.dark-mode .theme-switcher button {
     border-color:#777!important;
 }
 
-body.y1997-mode .theme-switcher {
+body.y1997-mode #colorModal .content {
     background:#000080!important;
-    border-top:4px outset #ff00ff!important;
-    box-shadow:none!important;
-    backdrop-filter:none!important;
+    color:#00ff00!important;
+    border:5px outset #ff00ff!important;
+    border-radius:0!important;
+    font-family:"Comic Sans MS";
+}
+
+body.y1997-mode .info-theme-section {
+    border-top:3px solid #00ffff;
 }
 
 body.y1997-mode .theme-switcher button {
@@ -328,7 +388,7 @@ body.y1997-mode .alert-box{
 <h1>Weather Impact Dashboard</h1>
 
 <div class="top-controls-wrapper">
-    <button class="color-info-btn" onclick="openColorModal()">Color Info</button>
+    <button class="color-info-btn" onclick="openInfoModal()">Info</button>
 
     <div class="top-controls">
         <div class="pill-toggle" id="planningToggle">
@@ -1107,81 +1167,119 @@ populateCategoryDropdown();
 loadWeather();
 </script>
 
-<!-- MODAL -->
-<div id="colorModal">
+<!-- INFO MODAL -->
+<div id="colorModal" role="dialog" aria-modal="true" aria-labelledby="infoTitle">
     <div class="content">
-        <span id="closeModal" style="cursor:pointer;float:right;font-size:1.3em;font-weight:bold;">×</span>
-        <h3 id="colorTitle">Color Status Definitions</h3>
+        <button id="closeModal" type="button" aria-label="Close information">×</button>
 
-        <div id="dailyDefs">
-            <p><b style="color:#e53935;">RED — Severe Impact</b></p>
+        <h2 id="infoTitle">Weather Impact Dashboard Information</h2>
+
+        <p>
+            This website is designed to give you an at-a-glance view of the weather
+            conditions at all sites for a chosen line of business.
+        </p>
+
+        <p>
+            By default, the site functions in a Daily view, focusing on the current
+            weather conditions for the day.
+        </p>
+
+        <p>
+            In the Daily view, sites follow the color code below and are flagged
+            accordingly when they meet any of the listed conditions.
+        </p>
+
+        <div class="info-status">
+            <h3>Daily View</h3>
+
+            <div class="info-status-title" style="color:#e53935;">RED — Severe Impact</div>
             <ul>
                 <li>Temperature less than 10°F</li>
                 <li>Freezing precipitation</li>
-                <li>More than 3” snowfall in last 72 hrs</li>
+                <li>More than 3 inches of snowfall in the last 72 hours</li>
                 <li>Severe storms</li>
             </ul>
 
-            <p><b style="color:#fdd835;">YELLOW — Minor Impact</b></p>
+            <div class="info-status-title" style="color:#c49b00;">YELLOW — Minor Impact</div>
             <ul>
                 <li>Light snow</li>
-                <li>Fog / visibility issues</li>
-                <li>Rain + freezing-risk temps</li>
+                <li>Fog or visibility issues</li>
+                <li>Rain with freezing-risk temperatures</li>
                 <li>Any active NWS alert</li>
             </ul>
 
-            <p><b style="color:#43a047;">GREEN — No Impact</b></p>
+            <div class="info-status-title" style="color:#43a047;">GREEN — No Impact</div>
+            <ul>
+                <li>No issues</li>
+            </ul>
         </div>
 
-        <div id="otDefs" style="display:none;">
-            <p><b style="color:#e53935;">RED — Severe Weather in Next 10 Days</b></p>
+        <p>
+            By selecting 10-Day, the dashboard looks 10 days into the future and
+            flags sites when they meet, or are expected to meet, any of the following
+            conditions.
+        </p>
+
+        <div class="info-status">
+            <h3>10-Day View</h3>
+
+            <div class="info-status-title" style="color:#e53935;">RED — Severe Weather in the Next 10 Days</div>
             <ul>
                 <li>Freezing precipitation</li>
                 <li>Heavy snow or storms</li>
-                <li>Temps ≤10°F</li>
+                <li>Temperatures at or below 10°F</li>
             </ul>
 
-            <p><b style="color:#fdd835;">YELLOW — Moderate Risk</b></p>
+            <div class="info-status-title" style="color:#c49b00;">YELLOW — Moderate Risk</div>
             <ul>
                 <li>Light snow</li>
                 <li>Fog</li>
-                <li>Freeze-risk temps + rain</li>
+                <li>Freezing-risk temperatures with rain</li>
                 <li>Any active NWS alert</li>
             </ul>
 
-            <p><b style="color:#43a047;">GREEN — No Expected Issues</b></p>
+            <div class="info-status-title" style="color:#43a047;">GREEN — No Expected Issues</div>
+        </div>
+
+        <div class="info-theme-section">
+            <h3>Theme</h3>
+            <div class="theme-switcher" aria-label="Theme controls">
+                <button type="button" onclick="setTheme('light')">Light</button>
+                <button type="button" onclick="setTheme('dark')">Dark</button>
+                <button type="button" onclick="setTheme('1997')">1997</button>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-function openColorModal(){
-    const d=document.getElementById("dailyDefs");
-    const o=document.getElementById("otDefs");
+const infoModal = document.getElementById("colorModal");
+const infoCloseButton = document.getElementById("closeModal");
 
-    if(planningMode==="daily"){
-        d.style.display="block";
-        o.style.display="none";
-        document.getElementById("colorTitle").textContent="Daily Color Status Definitions";
-    } else {
-        d.style.display="none";
-        o.style.display="block";
-        document.getElementById("colorTitle").textContent="OT Color Status Definitions";
-    }
-
-    document.getElementById("colorModal").style.display="flex";
+function openInfoModal(){
+    infoModal.style.display = "flex";
+    infoCloseButton.focus();
 }
 
-document.getElementById("closeModal").onclick=()=>document.getElementById("colorModal").style.display="none";
-document.getElementById("colorModal").onclick=(e)=>{ if(e.target.id==="colorModal") e.target.style.display="none"; };
+function closeInfoModal(){
+    infoModal.style.display = "none";
+}
+
+infoCloseButton.onclick = closeInfoModal;
+
+infoModal.onclick = (event) => {
+    if(event.target === infoModal){
+        closeInfoModal();
+    }
+};
+
+document.addEventListener("keydown", (event) => {
+    if(event.key === "Escape" && infoModal.style.display === "flex"){
+        closeInfoModal();
+    }
+});
 </script>
 
-<!-- FIXED THEME BUTTONS -->
-<div class="theme-switcher">
-    <button onclick="setTheme('light')">Light Mode</button>
-    <button onclick="setTheme('dark')">Dark Mode</button>
-    <button onclick="setTheme('1997')">1997</button>
-</div>
 
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8333736812812145"
  crossorigin="anonymous"></script>
