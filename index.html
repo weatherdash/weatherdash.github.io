@@ -86,6 +86,7 @@ body.y1997-mode .pill-option { color:#0000ff!important; }
 .city { font-size:1.35em; font-weight:bold; margin-bottom:4px; }
 .section-label { font-weight:bold; margin-top:6px; }
 .ten-day-entry { font-size:0.8em; margin:4px 0; }
+.loading-text { opacity:0.75; font-size:0.95em; }
 
 /* DARK MODE */
 body.dark-mode { background:#121212!important; color:#e6e6e6!important; }
@@ -151,30 +152,10 @@ body.y1997-mode .alert-box{
     border:3px outset #ff00ff!important;
     border-radius:0!important;
 }
-
-/* LOADING OVERLAY */
-#loadingOverlay {display:none;position:fixed;inset:0;z-index:99999;background:rgba(238,241,245,.95);align-items:center;justify-content:center;text-align:center;}
-#loadingOverlay .loading-card {background:white;color:#222;padding:24px 30px;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,.25);min-width:280px;font-family:Arial,sans-serif;}
-#loadingOverlay .loading-title {font-size:1.25em;font-weight:bold;margin-bottom:8px;}
-#loadingOverlay .loading-progress {margin-top:8px;opacity:.7;}
-body.dark-mode #loadingOverlay {background:rgba(18,18,18,.95)!important;}
-body.dark-mode #loadingOverlay .loading-card {background:#1c1c1c!important;color:#eee!important;}
-body.y1997-mode #loadingOverlay {background:rgba(0,0,128,.95)!important;}
-body.y1997-mode #loadingOverlay .loading-card {background:#ffff00!important;color:#0000ff!important;border:4px outset #ff00ff!important;border-radius:0!important;font-family:"Comic Sans MS";}
-
 </style>
 </head>
 
 <body>
-
-<div id="loadingOverlay">
-  <div class="loading-card">
-    <div class="loading-title">Loading Weather</div>
-    <div id="loadingSite">Starting...</div>
-    <div id="loadingProgress" class="loading-progress"></div>
-  </div>
-</div>
-
 
 <h1>Weather Impact Dashboard</h1>
 
@@ -188,19 +169,8 @@ body.y1997-mode #loadingOverlay .loading-card {background:#ffff00!important;colo
             <div class="pill-option">10-Day</div>
         </div>
 
-        <!-- Alphabetical dropdown -->
-        <select id="groupSelector">
-            <option value="group2">Account Management</option>
-            <option value="groupAMChat">Account Management Chat</option>
-            <option value="groupCRCS">CRCS</option>
-            <option value="groupMobileBilling">Mobile Billing</option>
-            <option value="groupMobileRepair">Mobile Repair</option>
-            <option value="group3">Repair Chat</option>
-            <option value="groupSCSEngBilling">SCS English Billing</option>
-            <option value="groupServiceability">Serviceability</option>
-            <option value="groupSMBSPB">SMB/SPB</option>
-            <option value="group1" selected>Technical Support</option>
-        </select>
+        <!-- This dropdown is populated automatically from SITE_CATEGORIES below. -->
+        <select id="groupSelector"></select>
 
         <button id="expandAll" class="expand-all-btn">Expand All 10-Day</button>
     </div>
@@ -223,6 +193,158 @@ const weatherIcon={0:"☀️",1:"🌤",2:"⛅",3:"☁️",45:"🌫",48:"🌫",
 51:"🌦",53:"🌦",55:"🌧",56:"🌧",57:"🌧",61:"🌧",63:"🌧",
 65:"🌧",66:"🌧",67:"🌧",71:"❄️",73:"❄️",75:"❄️",77:"❄️",
 80:"🌦",81:"🌧",82:"🌧",85:"❄️",86:"❄️",95:"⛈",96:"⛈",99:"⛈"};
+
+/* =========================
+   SITE CATEGORIES + SITES
+   This is the main place to add, remove, rename, or edit sites.
+
+   To add a category:
+   1. Add a new key under SITE_CATEGORIES.
+   2. Give it a label.
+   3. Add sites with name, lat, and lon.
+
+   To add a site:
+   Add another line like:
+   { name:"City, ST", lat:00.000, lon:-00.000 }
+========================= */
+const SITE_CATEGORIES = {
+    accountManagement: {
+        label: "Account Management",
+        sites: [
+            {name:"Albany, NY",lat:42.6526,lon:-73.7562},
+            {name:"Charlotte, NC",lat:35.2271,lon:-80.8431},
+            {name:"Cincinnati, OH",lat:39.1031,lon:-84.5120},
+            {name:"Colorado Springs, CO",lat:38.8339,lon:-104.8214},
+            {name:"Fond du Lac, WI",lat:43.775,lon:-88.4388},
+            {name:"Irving, TX",lat:32.814,lon:-96.9489},
+            {name:"McAllen, TX",lat:26.2034,lon:-98.23},
+            {name:"Portland, OR",lat:45.5051,lon:-122.675},
+            {name:"Rochester, NY",lat:43.1566,lon:-77.6088},
+            {name:"Vancouver, WA",lat:45.6366,lon:-122.6615},
+            {name:"Zanesville, OH",lat:39.9403,lon:-82.0132}
+        ]
+    },
+
+    accountManagementChat: {
+        label: "Account Management Chat",
+        sites: [
+            {name:"El Paso, TX", lat:31.761, lon:-106.485},
+            {name:"Rochester, NY", lat:43.1566, lon:-77.6088},
+            {name:"Zanesville, OH", lat:39.9403, lon:-82.0132}
+        ]
+    },
+
+    crcs: {
+        label: "CRCS",
+        sites: [
+            {name:"Morrisville, NC", lat:35.822, lon:-78.826}
+        ]
+    },
+
+    mobileBilling: {
+        label: "Mobile Billing",
+        sites: [
+            {name:"Albany, NY", lat:42.6526, lon:-73.7562},
+            {name:"McAllen, TX", lat:26.2034, lon:-98.23},
+            {name:"Rochester, NY", lat:43.1566, lon:-77.6088},
+            {name:"Vancouver, WA", lat:45.6366, lon:-122.6615}
+        ]
+    },
+
+    mobileRepair: {
+        label: "Mobile Repair",
+        sites: [
+            {name:"Amherst, NY", lat:42.978, lon:-78.800},
+            {name:"Cleveland, OH", lat:41.499, lon:-81.694},
+            {name:"Kansas City, MO", lat:39.099, lon:-94.578},
+            {name:"McAllen, TX", lat:26.2034, lon:-98.23},
+            {name:"St. Petersburg, FL", lat:27.767, lon:-82.640}
+        ]
+    },
+
+    repairChat: {
+        label: "Repair Chat",
+        sites: [
+            {name:"Bridgeton, MO",lat:38.767,lon:-90.411},
+            {name:"El Paso, TX",lat:31.761,lon:-106.485},
+            {name:"Louisville, KY",lat:38.252,lon:-85.758},
+            {name:"Morrisville, NC",lat:35.822,lon:-78.826}
+        ]
+    },
+
+    scsEnglishBilling: {
+        label: "SCS English Billing",
+        sites: [
+            {name:"Greensboro, NC", lat:36.072, lon:-79.792},
+            {name:"San Diego, CA", lat:32.716, lon:-117.161}
+        ]
+    },
+
+    serviceability: {
+        label: "Serviceability",
+        sites: [
+            {name:"San Antonio, TX", lat:29.425, lon:-98.494},
+            {name:"St. Ann, MO", lat:38.727, lon:-90.385},
+            {name:"West Columbia, SC", lat:33.994, lon:-81.074}
+        ]
+    },
+
+    smbSpb: {
+        label: "SMB/SPB",
+        sites: [
+            {name:"Charlotte, NC", lat:35.2271, lon:-80.8431},
+            {name:"Louisville, KY", lat:38.252, lon:-85.758},
+            {name:"Austin, TX", lat:30.267, lon:-97.743}
+        ]
+    },
+
+    technicalSupport: {
+        label: "Technical Support",
+        sites: [
+            {name:"Bridgeton, MO",lat:38.767,lon:-90.411},
+            {name:"Canton, OH",lat:40.798,lon:-81.378},
+            {name:"Cheektowaga, NY",lat:42.903,lon:-78.754},
+            {name:"Columbus, OH",lat:39.961,lon:-82.999},
+            {name:"El Paso, TX",lat:31.761,lon:-106.485},
+            {name:"Flushing, NY",lat:40.765,lon:-73.824},
+            {name:"Greensboro, NC",lat:36.072,lon:-79.792},
+            {name:"Louisville, KY",lat:38.252,lon:-85.758},
+            {name:"Middletown, NY",lat:41.445,lon:-74.422},
+            {name:"Morrisville, NC",lat:35.822,lon:-78.826},
+            {name:"Orlando, FL",lat:28.538,lon:-81.379},
+            {name:"San Antonio, TX",lat:29.425,lon:-98.494},
+            {name:"St. Petersburg, FL",lat:27.767,lon:-82.640}
+        ]
+    }
+};
+
+/* =========================
+   APP STATE
+========================= */
+const DEFAULT_CATEGORY_KEY = "technicalSupport";
+
+let currentCategoryKey = DEFAULT_CATEGORY_KEY;
+let currentGroup = SITE_CATEGORIES[currentCategoryKey].sites;
+let planningMode = "daily";
+let loadRunId = 0;
+
+/* =========================
+   CATEGORY DROPDOWN
+========================= */
+function populateCategoryDropdown(){
+    const selector = document.getElementById("groupSelector");
+    selector.innerHTML = "";
+
+    Object.entries(SITE_CATEGORIES)
+        .sort((a,b) => a[1].label.localeCompare(b[1].label))
+        .forEach(([key, category]) => {
+            const option = document.createElement("option");
+            option.value = key;
+            option.textContent = category.label;
+            option.selected = key === currentCategoryKey;
+            selector.appendChild(option);
+        });
+}
 
 /* =========================
    72H SNOW THRESHOLD
@@ -258,54 +380,35 @@ function classifyNWSEvent(eventName){
     return null;
 }
 
-
-function fetchWithTimeout(url, options = {}, timeoutMs = 15000){
-    return new Promise((resolve, reject) => {
-        const controller = new AbortController();
-        const timer = setTimeout(() => {
-            controller.abort();
-            reject(new Error("Request timed out"));
-        }, timeoutMs);
-
-        fetch(url, {...options, signal: controller.signal})
-            .then(response => {
-                clearTimeout(timer);
-                resolve(response);
-            })
-            .catch(error => {
-                clearTimeout(timer);
-                reject(error);
-            });
-    });
-}
-
 async function fetchNWSAlertSummary(lat, lon){
     try{
         const url = `https://api.weather.gov/alerts/active?point=${lat},${lon}`;
-        const r = await fetchWithTimeout(url, {
+        const r = await fetch(url, {
             headers: {
+                "User-Agent": "WeatherImpactDashboard (browser)",
                 "Accept": "application/geo+json"
             }
-        }, 5000);
+        });
         if(!r.ok) return null;
+
         const ignoredNWSEvents = [
-            "rip current statement" ,
-            "rip current risk" ,
-            "rip current advisory" ,
-            "beach hazards statement" ,
-            "small craft advisory" ,
-            "costal flood advisory" ,
+            "rip current statement",
+            "rip current risk",
+            "rip current advisory",
+            "beach hazards statement",
+            "small craft advisory",
+            "coastal flood advisory",
+            "costal flood advisory"
         ];
-        
+
         const d = await r.json();
         const features = (d && d.features ? d.features : []).filter(f => {
             const e = (f?.properties?.event || "").toLowerCase();
             return !ignoredNWSEvents.some(x => e.includes(x));
         });
-        
+
         if(!features.length) return null;
 
-        // Default: ANY active alert => yellow
         let best = {
             level: "yellow",
             headline: (features[0]?.properties?.headline)
@@ -313,7 +416,6 @@ async function fetchNWSAlertSummary(lat, lon){
                       || "Active NWS Alert"
         };
 
-        // Upgrade to red if any red event found
         for(const f of features){
             const p = f?.properties || {};
             const event = p.event || "";
@@ -339,9 +441,15 @@ async function fetchNWSAlertSummary(lat, lon){
 }
 
 /* IMPACT CALCULATIONS */
-function dominantWeather(c){
-    const f={}; for(const x of c) f[x]=(f[x]||0)+1;
-    return +Object.keys(f).reduce((a,b)=>f[a]>=f[b]?a:b);
+function dominantWeather(codes){
+    if(!codes || !codes.length) return 0;
+
+    const f = {};
+    for(const x of codes){
+        f[x] = (f[x] || 0) + 1;
+    }
+
+    return +Object.keys(f).reduce((a,b) => f[a] >= f[b] ? a : b);
 }
 
 function impactFromConditions(codeNow, snow72In, temp){
@@ -358,228 +466,168 @@ function impactFromConditions(codeNow, snow72In, temp){
 
 function otImpactFromTenDay(codes, highs, lows){
     let red=false,yellow=false;
+
     for(let i=0;i<11;i++){
-        const code=codes[i], lo=lows[i];
+        const code = codes[i];
+        const lo = lows[i];
+
         if([56,57,66,67,75,82,86,95,96,99].includes(code)) red=true;
         if(lo<=10) red=true;
 
         if([71,73,77,85,45,48].includes(code)) yellow=true;
         if(lo<=32 && [61,63,65,80,81].includes(code)) yellow=true;
     }
-    return red?"red":yellow?"yellow":"green";
+
+    return red ? "red" : yellow ? "yellow" : "green";
 }
 
-/* GROUPS */
-const group1=[
-    {name:"Bridgeton, MO",lat:38.767,lon:-90.411},
-    {name:"Canton, OH",lat:40.798,lon:-81.378},{name:"Cheektowaga, NY",lat:42.903,lon:-78.754},
-    {name:"Columbus, OH",lat:39.961,lon:-82.999},{name:"El Paso, TX",lat:31.761,lon:-106.485},
-    {name:"Flushing, NY",lat:40.765,lon:-73.824},{name:"Greensboro, NC",lat:36.072,lon:-79.792},
-    {name:"Louisville, KY",lat:38.252,lon:-85.758},{name:"Middletown, NY",lat:41.445,lon:-74.422},
-    {name:"Morrisville, NC",lat:35.822,lon:-78.826},{name:"Orlando, FL",lat:28.538,lon:-81.379},
-    {name:"San Antonio, TX",lat:29.425,lon:-98.494},{name:"St. Petersburg, FL",lat:27.767,lon:-82.640}
-];
-
-const group2=[
-    {name:"Albany, NY",lat:42.6526,lon:-73.7562},{name:"Charlotte, NC",lat:35.2271,lon:-80.8431},
-    {name:"Cincinnati, OH",lat:39.1031,lon:-84.5120},{name:"Colorado Springs, CO",lat:38.8339,lon:-104.8214},
-    {name:"Fond du Lac, WI",lat:43.775,lon:-88.4388},{name:"Irving, TX",lat:32.814,lon:-96.9489},
-    {name:"McAllen, TX",lat:26.2034,lon:-98.23},{name:"Portland, OR",lat:45.5051,lon:-122.675},
-    {name:"Rochester, NY",lat:43.1566,lon:-77.6088},{name:"Vancouver, WA",lat:45.6366,lon:-122.6615},
-    {name:"Zanesville, OH",lat:39.9403,lon:-82.0132}
-];
-
-const group3=[
-    {name:"Bridgeton, MO",lat:38.767,lon:-90.411},{name:"El Paso, TX",lat:31.761,lon:-106.485},
-    {name:"Louisville, KY",lat:38.252,lon:-85.758},{name:"Morrisville, NC",lat:35.822,lon:-78.826}
-];
-
-const groupMobileRepair = [
-    {name:"Amherst, NY", lat:42.978, lon:-78.800},
-    {name:"Cleveland, OH", lat:41.499, lon:-81.694},
-    {name:"Kansas City, MO", lat:39.099, lon:-94.578},
-    {name:"McAllen, TX", lat:26.2034, lon:-98.23},
-    {name:"St. Petersburg, FL", lat:27.767, lon:-82.640}
-];
-
-const groupAMChat = [
-    {name:"El Paso, TX", lat:31.761, lon:-106.485},
-    {name:"Rochester, NY", lat:43.1566, lon:-77.6088},
-    {name:"Zanesville, OH", lat:39.9403, lon:-82.0132}
-];
-
-const groupSMBSPB = [
-    {name:"Charlotte, NC", lat:35.2271, lon:-80.8431},
-    {name:"Louisville, KY", lat:38.252, lon:-85.758},
-    {name:"Austin, TX", lat:30.267, lon:-97.743}
-];
-
-const groupSCSEngBilling = [
-    {name:"Greensboro, NC", lat:36.072, lon:-79.792},
-    {name:"San Diego, CA", lat:32.716, lon:-117.161}
-];
-
-const groupMobileBilling = [
-    {name:"Albany, NY", lat:42.6526, lon:-73.7562},
-    {name:"McAllen, TX", lat:26.2034, lon:-98.23},
-    {name:"Rochester, NY", lat:43.1566, lon:-77.6088},
-    {name:"Vancouver, WA", lat:45.6366, lon:-122.6615}
-];
-
-const groupCRCS = [
-    {name:"Morrisville, NC", lat:35.822, lon:-78.826}
-];
-
-/* FIXED spelling: Serviceability */
-const groupServiceability = [
-    {name:"San Antonio, TX", lat:29.425, lon:-98.494},
-    {name:"St. Ann, MO", lat:38.727, lon:-90.385},
-    {name:"West Columbia, SC", lat:33.994, lon:-81.074}
-];
-
 /* FULL WEATHER CARD */
-let currentGroup = group1;
-let planningMode = "daily";
-
-async function loadWeatherCard(card, loc){
-    const now = new Date();
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&hourly=temperature_2m,weather_code,snowfall&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,snowfall_sum&forecast_days=16&temperature_unit=fahrenheit&timezone=auto`;
-
-    const r = await fetchWithTimeout(url, {}, 15000);
-    const data = await r.json();
-
-    const codeNow = data.current.weather_code;
-    const tempNow = Math.round(data.current.temperature_2m);
-
-    const codeToday = data.daily.weather_code[0];
-    const codeTomorrow = data.daily.weather_code[1];
-    const todayHigh = Math.round(data.daily.temperature_2m_max[0]);
-    const todayLow = Math.round(data.daily.temperature_2m_min[0]);
-    const tomHigh = Math.round(data.daily.temperature_2m_max[1]);
-    const tomLow = Math.round(data.daily.temperature_2m_min[1]);
-
-    const hours = data.hourly.time.map(t => new Date(t));
-    const hSnow = data.hourly.snowfall, hCodes = data.hourly.weather_code, hTemps = data.hourly.temperature_2m;
-
-    const snow72In = sumSnowInchesWindow(hours, hSnow, now, 72);
-
-    const last6Codes=[], last6Temps=[], next6Codes=[], next6Temps=[];
-    for(let i=0;i<hours.length;i++){
-        const diff=(now-hours[i])/3600000;
-        if(diff<=6&&diff>=0){ last6Codes.push(hCodes[i]); last6Temps.push(hTemps[i]); }
-        if(diff<0&&diff>=-6){ next6Codes.push(hCodes[i]); next6Temps.push(hTemps[i]); }
-    }
-
-    const last6Dom=dominantWeather(last6Codes);
-    const next6Dom=dominantWeather(next6Codes);
-    const last6Avg=last6Temps.length?Math.round(last6Temps.reduce((a,b)=>a+b)/last6Temps.length):0;
-    const next6Avg=next6Temps.length?Math.round(next6Temps.reduce((a,b)=>a+b)/next6Temps.length):0;
-
-    let impact = (planningMode==="daily")
-        ? impactFromConditions(codeNow, snow72In, tempNow)
-        : otImpactFromTenDay(
-            data.daily.weather_code.slice(0,11),
-            data.daily.temperature_2m_max.slice(0,11),
-            data.daily.temperature_2m_min.slice(0,11)
-        );
-
-    /* NWS override wins, but NWS must never stop the card from loading */
-    let nws = null;
+async function loadWeatherCard(card, loc, expectedRunId){
     try{
-        nws = await fetchNWSAlertSummary(loc.lat, loc.lon);
+        const now = new Date();
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&hourly=temperature_2m,weather_code,snowfall&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,snowfall_sum&forecast_days=16&temperature_unit=fahrenheit&timezone=auto`;
+
+        /*
+           Fetch weather and NWS alert together.
+           This makes each card faster than waiting for weather first, then alert second.
+        */
+        const [data, nws] = await Promise.all([
+            fetch(url).then(r => {
+                if(!r.ok) throw new Error("Open-Meteo request failed");
+                return r.json();
+            }),
+            fetchNWSAlertSummary(loc.lat, loc.lon)
+        ]);
+
+        /*
+           If the user changed category or mode while requests were still running,
+           skip drawing stale results into the page.
+        */
+        if(expectedRunId !== loadRunId) return;
+
+        const codeNow = data.current.weather_code;
+        const tempNow = Math.round(data.current.temperature_2m);
+
+        const codeToday = data.daily.weather_code[0];
+        const codeTomorrow = data.daily.weather_code[1];
+        const todayHigh = Math.round(data.daily.temperature_2m_max[0]);
+        const todayLow = Math.round(data.daily.temperature_2m_min[0]);
+        const tomHigh = Math.round(data.daily.temperature_2m_max[1]);
+        const tomLow = Math.round(data.daily.temperature_2m_min[1]);
+
+        const hours = data.hourly.time.map(t => new Date(t));
+        const hSnow = data.hourly.snowfall;
+        const hCodes = data.hourly.weather_code;
+        const hTemps = data.hourly.temperature_2m;
+
+        const snow72In = sumSnowInchesWindow(hours, hSnow, now, 72);
+
+        const last6Codes=[], last6Temps=[], next6Codes=[], next6Temps=[];
+        for(let i=0;i<hours.length;i++){
+            const diff=(now-hours[i])/3600000;
+            if(diff<=6&&diff>=0){ last6Codes.push(hCodes[i]); last6Temps.push(hTemps[i]); }
+            if(diff<0&&diff>=-6){ next6Codes.push(hCodes[i]); next6Temps.push(hTemps[i]); }
+        }
+
+        const last6Dom=dominantWeather(last6Codes);
+        const next6Dom=dominantWeather(next6Codes);
+        const last6Avg=last6Temps.length?Math.round(last6Temps.reduce((a,b)=>a+b)/last6Temps.length):0;
+        const next6Avg=next6Temps.length?Math.round(next6Temps.reduce((a,b)=>a+b)/next6Temps.length):0;
+
+        let impact = (planningMode==="daily")
+            ? impactFromConditions(codeNow, snow72In, tempNow)
+            : otImpactFromTenDay(
+                data.daily.weather_code.slice(0,11),
+                data.daily.temperature_2m_max.slice(0,11),
+                data.daily.temperature_2m_min.slice(0,11)
+            );
+
+        /* NWS override wins */
         if(nws && nws.level){
             impact = nws.level;
         }
+
+        card.className = "card " + impact + "-mode";
+
+        card.innerHTML = `
+            <div class="city">${loc.name}</div>
+            <div style="font-size:0.85em;">
+                <a target="_blank" href="https://forecast.weather.gov/MapClick.php?lat=${loc.lat}&lon=${loc.lon}">
+                    More info
+                </a>
+            </div>
+
+            ${nws ? `<div class="alert-box"><b>Active NWS Alert:</b> ${nws.headline}</div>` : ``}
+
+            <div class="section-label">Right Now:</div>
+            <span style="font-size:1.3em;">${weatherIcon[codeNow]||""}</span>
+            ${weatherText[codeNow] || "Unknown"}, ${tempNow}°F
+
+            <div class="section-label">Last 6 Hours:</div>
+            ${weatherText[last6Dom] || "Unknown"} — ${last6Avg}°F
+
+            <div class="section-label">Next 6 Hours:</div>
+            ${weatherText[next6Dom] || "Unknown"} — ${next6Avg}°F
+
+            <div class="section-label">Today:</div>
+            ${weatherText[codeToday] || "Unknown"} (H ${todayHigh} / L ${todayLow})
+
+            <div class="section-label">Tomorrow:</div>
+            ${weatherText[codeTomorrow] || "Unknown"} (H ${tomHigh} / L ${tomLow})
+
+            <div style="margin-top:10px;">
+                <button class="tenDayBtn">Show 10-Day Forecast</button>
+            </div>
+
+            <div class="ten-day"></div>
+        `;
+
+        const btn = card.querySelector(".tenDayBtn");
+        const panel = card.querySelector(".ten-day");
+        btn.onclick = () => togglePanel(panel, btn, data);
+
     }catch(e){
-        nws = null;
+        if(expectedRunId !== loadRunId) return;
+
+        card.className = "card yellow-mode";
+        card.innerHTML = `
+            <div class="city">${loc.name}</div>
+            <div class="alert-box">
+                <b>Weather unavailable:</b> Could not load weather data for this site.
+            </div>
+            <div style="font-size:0.85em;margin-top:8px;">
+                <a target="_blank" href="https://forecast.weather.gov/MapClick.php?lat=${loc.lat}&lon=${loc.lon}">
+                    More info
+                </a>
+            </div>
+        `;
     }
-
-    card.className = "card " + impact + "-mode";
-
-    card.innerHTML = `
-        <div class="city">${loc.name}</div>
-        <div style="font-size:0.85em;">
-            <a target="_blank" href="https://forecast.weather.gov/MapClick.php?lat=${loc.lat}&lon=${loc.lon}">
-                More info
-            </a>
-        </div>
-
-        ${nws ? `<div class="alert-box"><b>Active NWS Alert:</b> ${nws.headline}</div>` : ``}
-
-        <div class="section-label">Right Now:</div>
-        <span style="font-size:1.3em;">${weatherIcon[codeNow]||""}</span>
-        ${weatherText[codeNow]}, ${tempNow}°F
-
-        <div class="section-label">Last 6 Hours:</div>
-        ${weatherText[last6Dom]} — ${last6Avg}°F
-
-        <div class="section-label">Next 6 Hours:</div>
-        ${weatherText[next6Dom]} — ${next6Avg}°F
-
-        <div class="section-label">Today:</div>
-        ${weatherText[codeToday]} (H ${todayHigh} / L ${todayLow})
-
-        <div class="section-label">Tomorrow:</div>
-        ${weatherText[codeTomorrow]} (H ${tomHigh} / L ${tomLow})
-
-        <div style="margin-top:10px;">
-            <button class="tenDayBtn">Show 10-Day Forecast</button>
-        </div>
-
-        <div class="ten-day"></div>
-    `;
-
-    const btn = card.querySelector(".tenDayBtn");
-    const panel = card.querySelector(".ten-day");
-    btn.onclick = () => togglePanel(panel, btn, data);
 }
 
-/* LOAD WEATHER FOR CURRENT GROUP */
+/* LOAD WEATHER FOR CURRENT GROUP
+   Cards are created immediately, then all sites load in parallel.
+*/
 async function loadWeather(){
-    const overlay = document.getElementById("loadingOverlay");
-    const loadingSite = document.getElementById("loadingSite");
-    const loadingProgress = document.getElementById("loadingProgress");
+    const runId = ++loadRunId;
+    const grid = document.getElementById("weatherGrid");
+    grid.innerHTML = "";
 
-    const g = document.getElementById("weatherGrid");
-    g.innerHTML = "";
+    const cards = currentGroup.map(loc => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+            <div class="city">${loc.name}</div>
+            <div class="loading-text">Loading weather...</div>
+        `;
+        grid.appendChild(card);
+        return {card, loc};
+    });
 
-    overlay.style.display = "flex";
+    await Promise.allSettled(
+        cards.map(({card, loc}) => loadWeatherCard(card, loc, runId))
+    );
 
-    try{
-        for(let i=0; i<currentGroup.length; i++){
-            const loc = currentGroup[i];
-
-            loadingSite.textContent = "Loading " + loc.name + "...";
-            loadingProgress.textContent = (i + 1) + " of " + currentGroup.length;
-
-            const card = document.createElement("div");
-            card.className = "card";
-            g.appendChild(card);
-
-            try{
-                await loadWeatherCard(card, loc);
-            }catch(e){
-                card.className = "card yellow-mode";
-                card.innerHTML = `
-                    <div class="city">${loc.name}</div>
-                    <div class="alert-box">
-                        <b>Weather unavailable:</b> Could not load weather data for this site.
-                        <div style="font-size:0.8em;margin-top:4px;opacity:0.8;">
-                            ${e && e.message ? e.message : e}
-                        </div>
-                    </div>
-                    <div style="font-size:0.85em;margin-top:8px;">
-                        <a target="_blank" href="https://forecast.weather.gov/MapClick.php?lat=${loc.lat}&lon=${loc.lon}">
-                            More info
-                        </a>
-                    </div>
-                `;
-            }
-
-            await new Promise(resolve => setTimeout(resolve, 0));
-        }
-    }finally{
-        overlay.style.display = "none";
+    if(runId === loadRunId){
         updateExpandButtonState();
     }
 }
@@ -589,13 +637,18 @@ function togglePanel(panel, btn, data){
     if(panel.style.display==="block"){
         panel.style.display="none";
         btn.textContent="Show 10-Day Forecast";
+        updateExpandButtonState();
         return;
     }
+
     let html="";
     for(let d=0; d<=10; d++){
-        // UTC → LOCAL FIX
-        const utc = new Date(data.daily.time[d]);
-        const date = new Date(utc.getTime() + utc.getTimezoneOffset() * 60000);
+        /*
+           Date strings from daily.time are YYYY-MM-DD.
+           Creating from split parts prevents browser timezone shifting.
+        */
+        const parts = data.daily.time[d].split("-").map(Number);
+        const date = new Date(parts[0], parts[1] - 1, parts[2]);
 
         const label = date.toLocaleDateString("en-US", {
             weekday:"short", month:"short", day:"numeric"
@@ -604,11 +657,12 @@ function togglePanel(panel, btn, data){
         html += `
         <div class="ten-day-entry">
             <b>${label}:</b>
-            ${weatherText[data.daily.weather_code[d]]}
+            ${weatherText[data.daily.weather_code[d]] || "Unknown"}
             — High ${Math.round(data.daily.temperature_2m_max[d])}
             / Low ${Math.round(data.daily.temperature_2m_min[d])}
         </div>`;
     }
+
     panel.innerHTML=html;
     panel.style.display="block";
     btn.textContent="Hide 10-Day Forecast";
@@ -624,31 +678,23 @@ document.getElementById("expandAll").onclick=()=>{
     const panels=document.querySelectorAll(".ten-day");
     const btns=document.querySelectorAll(".tenDayBtn");
     const open=[...panels].some(p=>p.style.display==="block");
+
     if(open){
-        panels.forEach((p,i)=>{ p.style.display="none"; btns[i].textContent="Show 10-Day Forecast"; });
+        panels.forEach((p,i)=>{
+            p.style.display="none";
+            if(btns[i]) btns[i].textContent="Show 10-Day Forecast";
+        });
     } else {
         btns.forEach(btn=>btn.click());
     }
+
     updateExpandButtonState();
 };
 
 /* GROUP SELECTOR */
 document.getElementById("groupSelector").onchange = function () {
-    const v = this.value;
-
-    currentGroup =
-        (v === "group1") ? group1 :
-        (v === "group2") ? group2 :
-        (v === "group3") ? group3 :
-        (v === "groupMobileRepair") ? groupMobileRepair :
-        (v === "groupAMChat") ? groupAMChat :
-        (v === "groupSMBSPB") ? groupSMBSPB :
-        (v === "groupSCSEngBilling") ? groupSCSEngBilling :
-        (v === "groupMobileBilling") ? groupMobileBilling :
-        (v === "groupCRCS") ? groupCRCS :
-        (v === "groupServiceability") ? groupServiceability :
-        group1;
-
+    currentCategoryKey = this.value;
+    currentGroup = SITE_CATEGORIES[currentCategoryKey].sites;
     loadWeather();
 };
 
@@ -656,10 +702,13 @@ document.getElementById("groupSelector").onchange = function () {
 const pill=document.getElementById("planningToggle");
 const slider=pill.querySelector(".pill-slider");
 const pillOps=pill.querySelectorAll(".pill-option");
+
 pill.onclick=()=>{
     planningMode=(planningMode==="daily")?"ot":"daily";
+
     pillOps.forEach(o=>o.classList.remove("active"));
     pillOps[ planningMode==="daily"?0:1 ].classList.add("active");
+
     slider.style.transform=(planningMode==="daily")?"translateX(0%)":"translateX(100%)";
     loadWeather();
 };
@@ -667,14 +716,17 @@ pill.onclick=()=>{
 /* THEME SWITCHER */
 function setTheme(m){
     document.body.classList.remove("light-mode","dark-mode","y1997-mode");
+
     if(m==="light") document.body.classList.add("light-mode");
     if(m==="dark") document.body.classList.add("dark-mode");
     if(m==="1997") document.body.classList.add("y1997-mode");
+
     localStorage.setItem("weatherTheme",m);
 }
 setTheme(localStorage.getItem("weatherTheme")||"light");
 
 /* INITIAL LOAD */
+populateCategoryDropdown();
 loadWeather();
 </script>
 
@@ -731,15 +783,18 @@ function openColorModal(){
     const o=document.getElementById("otDefs");
 
     if(planningMode==="daily"){
-        d.style.display="block"; o.style.display="none";
+        d.style.display="block";
+        o.style.display="none";
         document.getElementById("colorTitle").textContent="Daily Color Status Definitions";
     } else {
-        d.style.display="none"; o.style.display="block";
+        d.style.display="none";
+        o.style.display="block";
         document.getElementById("colorTitle").textContent="OT Color Status Definitions";
     }
 
     document.getElementById("colorModal").style.display="flex";
 }
+
 document.getElementById("closeModal").onclick=()=>document.getElementById("colorModal").style.display="none";
 document.getElementById("colorModal").onclick=(e)=>{ if(e.target.id==="colorModal") e.target.style.display="none"; };
 </script>
@@ -749,15 +804,9 @@ document.getElementById("colorModal").onclick=(e)=>{ if(e.target.id==="colorModa
     <button onclick="setTheme('light')">Light Mode</button>
     <button onclick="setTheme('dark')">Dark Mode</button>
     <button onclick="setTheme('1997')">1997</button>
+
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8333736812812145"
      crossorigin="anonymous"></script>
-    
-    
-    
-    
-    
-    
-    
 </div>
 
 </body>
