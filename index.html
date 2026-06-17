@@ -71,22 +71,94 @@ body.y1997-mode .pill-slider {
 }
 body.y1997-mode .pill-option { color:#0000ff!important; }
 
-/* GRID */
+/* TWO-ROW DYNAMIC GRID
+   JavaScript sets --site-columns to ceil(number of sites / 2).
+   The remaining variables scale automatically as each card gets narrower.
+*/
 .grid {
+    --site-columns: 1;
+    --grid-gap: 20px;
+    --card-padding: 16px;
+    --card-font-size: 16px;
+    --status-border-width: 12px;
+    --card-radius: 12px;
+
     display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(350px,1fr));
-    gap:20px;
+    grid-template-columns:repeat(var(--site-columns), minmax(0, 1fr));
+    gap:var(--grid-gap);
+    align-items:start;
+    width:100%;
 }
+
 .card {
-    background:white; padding:16px; border-radius:12px;
+    min-width:0;
+    overflow:hidden;
+    overflow-wrap:anywhere;
+    word-break:normal;
+
+    background:white;
+    padding:var(--card-padding);
+    border-radius:var(--card-radius);
     box-shadow:0 3px 10px rgba(0,0,0,0.12);
-    border-left:12px solid #43a047;
+    border-left:var(--status-border-width) solid #43a047;
+    font-size:var(--card-font-size);
+    line-height:1.25;
     transition:background .4s,color .4s,border-color .4s;
 }
-.city { font-size:1.35em; font-weight:bold; margin-bottom:4px; }
-.section-label { font-weight:bold; margin-top:6px; }
-.ten-day-entry { font-size:0.8em; margin:4px 0; }
-.loading-text { opacity:0.75; font-size:0.95em; }
+
+.city {
+    min-width:0;
+    font-size:1.35em;
+    line-height:1.08;
+    font-weight:bold;
+    margin-bottom:4px;
+    overflow-wrap:anywhere;
+}
+
+.section-label {
+    font-weight:bold;
+    margin-top:0.42em;
+}
+
+.ten-day-entry {
+    font-size:0.8em;
+    line-height:1.2;
+    margin:0.3em 0;
+}
+
+.loading-text {
+    opacity:0.75;
+    font-size:0.95em;
+}
+
+.card a {
+    overflow-wrap:anywhere;
+}
+
+.card button {
+    box-sizing:border-box;
+    max-width:100%;
+    padding:0.35em 0.55em;
+    font-size:0.88em;
+    white-space:normal;
+}
+
+.grid[data-density="compact"] .card {
+    line-height:1.18;
+}
+
+.grid[data-density="dense"] .card {
+    line-height:1.12;
+}
+
+.grid[data-density="dense"] .section-label {
+    margin-top:0.3em;
+}
+
+.grid[data-density="dense"] .alert-box {
+    padding:0.4em 0.45em;
+    font-size:0.78em;
+}
 
 /* DARK MODE */
 body.dark-mode { background:#121212!important; color:#e6e6e6!important; }
@@ -745,6 +817,49 @@ async function loadWeatherCard(card, loc, expectedRunId, signal){
 }
 
 /* =========================
+   TWO-ROW GRID LAYOUT
+
+   The number of columns is always ceil(site count / 2), so a category
+   uses no more than two rows. Styling scales from the actual card width.
+========================= */
+function updateTwoRowGridLayout(){
+    const grid = document.getElementById("weatherGrid");
+    if(!grid) return;
+
+    const siteCount = Math.max(1, currentGroup.length);
+    const columns = Math.max(1, Math.ceil(siteCount / 2));
+
+    grid.style.setProperty("--site-columns", String(columns));
+
+    requestAnimationFrame(() => {
+        const gridWidth = Math.max(1, grid.clientWidth);
+        const gap = Math.max(4, Math.min(20, gridWidth / Math.max(columns * 18, 1)));
+        const cardWidth = Math.max(
+            1,
+            (gridWidth - gap * Math.max(0, columns - 1)) / columns
+        );
+
+        const fontSize = Math.max(7, Math.min(16, cardWidth / 20));
+        const padding = Math.max(4, Math.min(16, cardWidth / 16));
+        const borderWidth = Math.max(3, Math.min(12, cardWidth / 25));
+        const radius = Math.max(4, Math.min(12, cardWidth / 22));
+
+        grid.style.setProperty("--grid-gap", `${gap.toFixed(1)}px`);
+        grid.style.setProperty("--card-font-size", `${fontSize.toFixed(1)}px`);
+        grid.style.setProperty("--card-padding", `${padding.toFixed(1)}px`);
+        grid.style.setProperty("--status-border-width", `${borderWidth.toFixed(1)}px`);
+        grid.style.setProperty("--card-radius", `${radius.toFixed(1)}px`);
+
+        grid.dataset.density =
+            cardWidth < 125 ? "dense" :
+            cardWidth < 220 ? "compact" :
+            "normal";
+    });
+}
+
+window.addEventListener("resize", updateTwoRowGridLayout);
+
+/* =========================
    LOAD CURRENT CATEGORY
    - All cards appear immediately
    - Weather requests run in parallel
@@ -762,6 +877,7 @@ async function loadWeather(){
 
     const grid = document.getElementById("weatherGrid");
     grid.innerHTML = "";
+    updateTwoRowGridLayout();
 
     const cards = currentGroup.map(loc => {
         const card = document.createElement("div");
@@ -774,11 +890,14 @@ async function loadWeather(){
         return {card, loc};
     });
 
+    updateTwoRowGridLayout();
+
     await Promise.allSettled(
         cards.map(({card, loc}) => loadWeatherCard(card, loc, runId, signal))
     );
 
     if(runId === loadRunId){
+        updateTwoRowGridLayout();
         updateExpandButtonState();
     }
 }
