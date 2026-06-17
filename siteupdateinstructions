@@ -1,0 +1,27 @@
+Site Update Instructions:
+
+
+Adding/Removing Sites
+
+Step 1: Open index.html and click the pencil in the top right to edit the file. 
+
+Step 2: Scroll to line 572 and you will see the site registry list.
+
+At the bottom of the list, type in the new site, matching the formatting of the site above.
+
+For example, I'm adding Bonnieville KY here:
+
+    stAnnMO:           {name:"St. Ann, MO", lat:38.727, lon:-90.385},
+    stPetersburgFL:    {name:"St. Petersburg, FL", lat:27.767, lon:-82.640},
+    vancouverWA:       {name:"Vancouver, WA", lat:45.6366, lon:-122.6615},
+    westColumbiaSC:    {name:"West Columbia, SC", lat:33.994, lon:-81.074},
+    zanesvilleOH:      {name:"Zanesville, OH", lat:39.9403, lon:-82.0132},
+    bonnievilleKY:     {name:"Bonnieville, KY"},
+};
+
+NOTE: Latitude and Longitude numbers are not needed for new sites. 
+
+From there you can add them to a category. 
+
+
+Adding/Removing Categories:
