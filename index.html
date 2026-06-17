@@ -195,138 +195,197 @@ const weatherIcon={0:"☀️",1:"🌤",2:"⛅",3:"☁️",45:"🌫",48:"🌫",
 80:"🌦",81:"🌧",82:"🌧",85:"❄️",86:"❄️",95:"⛈",96:"⛈",99:"⛈"};
 
 /* =========================
-   SITE CATEGORIES + SITES
-   This is the main place to add, remove, rename, or edit sites.
+   APPLICATION CONFIGURATION
 
-   To add a category:
-   1. Add a new key under SITE_CATEGORIES.
-   2. Give it a label.
-   3. Add sites with name, lat, and lon.
+   Future maintainers should normally edit only these three objects:
+   - APP_CONFIG: cache durations and API request size
+   - IMPACT_RULES: red/yellow weather thresholds
+   - SITES / SITE_CATEGORIES: locations and category membership
+========================= */
+const APP_CONFIG = {
+    forecastDays: 11,
+    weatherCacheMs: 10 * 60 * 1000,
+    nwsCacheMs: 5 * 60 * 1000
+};
 
-   To add a site:
-   Add another line like:
-   { name:"City, ST", lat:00.000, lon:-00.000 }
+const IMPACT_RULES = {
+    severeColdF: 10,
+    freezingF: 32,
+    severeSnow72In: 3,
+
+    dailyRedCodes: [56,57,66,67,95,96,99],
+    dailyYellowCodes: [45,48,71,73,75,85,86],
+    rainCodes: [61,63,65,80,81,82],
+
+    tenDayRedCodes: [56,57,66,67,75,82,86,95,96,99],
+    tenDayYellowCodes: [45,48,71,73,77,85],
+
+    nwsRedEvents: [
+        "blizzard warning",
+        "ice storm warning",
+        "winter storm warning",
+        "snow squall warning"
+    ],
+
+    ignoredNWSEvents: [
+        "rip current statement",
+        "rip current risk",
+        "rip current advisory",
+        "beach hazards statement",
+        "small craft advisory",
+        "coastal flood advisory",
+        "costal flood advisory"
+    ]
+};
+
+/* =========================
+   MASTER SITE REGISTRY
+
+   Each site's coordinates are defined once. Categories below reference
+   these site IDs, so coordinate corrections only need to be made here.
+========================= */
+const SITES = {
+    albanyNY:          {name:"Albany, NY", lat:42.6526, lon:-73.7562},
+    amherstNY:         {name:"Amherst, NY", lat:42.978, lon:-78.800},
+    austinTX:          {name:"Austin, TX", lat:30.267, lon:-97.743},
+    bridgetonMO:       {name:"Bridgeton, MO", lat:38.767, lon:-90.411},
+    cantonOH:          {name:"Canton, OH", lat:40.798, lon:-81.378},
+    charlotteNC:       {name:"Charlotte, NC", lat:35.2271, lon:-80.8431},
+    cheektowagaNY:     {name:"Cheektowaga, NY", lat:42.903, lon:-78.754},
+    cincinnatiOH:      {name:"Cincinnati, OH", lat:39.1031, lon:-84.5120},
+    clevelandOH:       {name:"Cleveland, OH", lat:41.499, lon:-81.694},
+    coloradoSpringsCO: {name:"Colorado Springs, CO", lat:38.8339, lon:-104.8214},
+    columbusOH:        {name:"Columbus, OH", lat:39.961, lon:-82.999},
+    elPasoTX:          {name:"El Paso, TX", lat:31.761, lon:-106.485},
+    flushingNY:        {name:"Flushing, NY", lat:40.765, lon:-73.824},
+    fondDuLacWI:       {name:"Fond du Lac, WI", lat:43.775, lon:-88.4388},
+    greensboroNC:      {name:"Greensboro, NC", lat:36.072, lon:-79.792},
+    irvingTX:          {name:"Irving, TX", lat:32.814, lon:-96.9489},
+    kansasCityMO:      {name:"Kansas City, MO", lat:39.099, lon:-94.578},
+    louisvilleKY:      {name:"Louisville, KY", lat:38.252, lon:-85.758},
+    mcAllenTX:         {name:"McAllen, TX", lat:26.2034, lon:-98.23},
+    middletownNY:      {name:"Middletown, NY", lat:41.445, lon:-74.422},
+    morrisvilleNC:     {name:"Morrisville, NC", lat:35.822, lon:-78.826},
+    orlandoFL:         {name:"Orlando, FL", lat:28.538, lon:-81.379},
+    portlandOR:        {name:"Portland, OR", lat:45.5051, lon:-122.675},
+    rochesterNY:       {name:"Rochester, NY", lat:43.1566, lon:-77.6088},
+    sanAntonioTX:      {name:"San Antonio, TX", lat:29.425, lon:-98.494},
+    sanDiegoCA:        {name:"San Diego, CA", lat:32.716, lon:-117.161},
+    stAnnMO:           {name:"St. Ann, MO", lat:38.727, lon:-90.385},
+    stPetersburgFL:    {name:"St. Petersburg, FL", lat:27.767, lon:-82.640},
+    vancouverWA:       {name:"Vancouver, WA", lat:45.6366, lon:-122.6615},
+    westColumbiaSC:    {name:"West Columbia, SC", lat:33.994, lon:-81.074},
+    zanesvilleOH:      {name:"Zanesville, OH", lat:39.9403, lon:-82.0132}
+};
+
+/* =========================
+   SITE CATEGORIES
+
+   Add or remove site IDs here to change category membership.
 ========================= */
 const SITE_CATEGORIES = {
     accountManagement: {
         label: "Account Management",
-        sites: [
-            {name:"Albany, NY",lat:42.6526,lon:-73.7562},
-            {name:"Charlotte, NC",lat:35.2271,lon:-80.8431},
-            {name:"Cincinnati, OH",lat:39.1031,lon:-84.5120},
-            {name:"Colorado Springs, CO",lat:38.8339,lon:-104.8214},
-            {name:"Fond du Lac, WI",lat:43.775,lon:-88.4388},
-            {name:"Irving, TX",lat:32.814,lon:-96.9489},
-            {name:"McAllen, TX",lat:26.2034,lon:-98.23},
-            {name:"Portland, OR",lat:45.5051,lon:-122.675},
-            {name:"Rochester, NY",lat:43.1566,lon:-77.6088},
-            {name:"Vancouver, WA",lat:45.6366,lon:-122.6615},
-            {name:"Zanesville, OH",lat:39.9403,lon:-82.0132}
+        siteIds: [
+            "albanyNY", "charlotteNC", "cincinnatiOH", "coloradoSpringsCO",
+            "fondDuLacWI", "irvingTX", "mcAllenTX", "portlandOR",
+            "rochesterNY", "vancouverWA", "zanesvilleOH"
         ]
     },
 
     accountManagementChat: {
         label: "Account Management Chat",
-        sites: [
-            {name:"El Paso, TX", lat:31.761, lon:-106.485},
-            {name:"Rochester, NY", lat:43.1566, lon:-77.6088},
-            {name:"Zanesville, OH", lat:39.9403, lon:-82.0132}
-        ]
+        siteIds: ["elPasoTX", "rochesterNY", "zanesvilleOH"]
     },
 
     crcs: {
         label: "CRCS",
-        sites: [
-            {name:"Morrisville, NC", lat:35.822, lon:-78.826}
-        ]
+        siteIds: ["morrisvilleNC"]
     },
 
     mobileBilling: {
         label: "Mobile Billing",
-        sites: [
-            {name:"Albany, NY", lat:42.6526, lon:-73.7562},
-            {name:"McAllen, TX", lat:26.2034, lon:-98.23},
-            {name:"Rochester, NY", lat:43.1566, lon:-77.6088},
-            {name:"Vancouver, WA", lat:45.6366, lon:-122.6615}
-        ]
+        siteIds: ["albanyNY", "mcAllenTX", "rochesterNY", "vancouverWA"]
     },
 
     mobileRepair: {
         label: "Mobile Repair",
-        sites: [
-            {name:"Amherst, NY", lat:42.978, lon:-78.800},
-            {name:"Cleveland, OH", lat:41.499, lon:-81.694},
-            {name:"Kansas City, MO", lat:39.099, lon:-94.578},
-            {name:"McAllen, TX", lat:26.2034, lon:-98.23},
-            {name:"St. Petersburg, FL", lat:27.767, lon:-82.640}
-        ]
+        siteIds: ["amherstNY", "clevelandOH", "kansasCityMO", "mcAllenTX", "stPetersburgFL"]
     },
 
     repairChat: {
         label: "Repair Chat",
-        sites: [
-            {name:"Bridgeton, MO",lat:38.767,lon:-90.411},
-            {name:"El Paso, TX",lat:31.761,lon:-106.485},
-            {name:"Louisville, KY",lat:38.252,lon:-85.758},
-            {name:"Morrisville, NC",lat:35.822,lon:-78.826}
-        ]
+        siteIds: ["bridgetonMO", "elPasoTX", "louisvilleKY", "morrisvilleNC"]
     },
 
     scsEnglishBilling: {
         label: "SCS English Billing",
-        sites: [
-            {name:"Greensboro, NC", lat:36.072, lon:-79.792},
-            {name:"San Diego, CA", lat:32.716, lon:-117.161}
-        ]
+        siteIds: ["greensboroNC", "sanDiegoCA"]
     },
 
     serviceability: {
         label: "Serviceability",
-        sites: [
-            {name:"San Antonio, TX", lat:29.425, lon:-98.494},
-            {name:"St. Ann, MO", lat:38.727, lon:-90.385},
-            {name:"West Columbia, SC", lat:33.994, lon:-81.074}
-        ]
+        siteIds: ["sanAntonioTX", "stAnnMO", "westColumbiaSC"]
     },
 
     smbSpb: {
         label: "SMB/SPB",
-        sites: [
-            {name:"Charlotte, NC", lat:35.2271, lon:-80.8431},
-            {name:"Louisville, KY", lat:38.252, lon:-85.758},
-            {name:"Austin, TX", lat:30.267, lon:-97.743}
-        ]
+        siteIds: ["charlotteNC", "louisvilleKY", "austinTX"]
     },
 
     technicalSupport: {
         label: "Technical Support",
-        sites: [
-            {name:"Bridgeton, MO",lat:38.767,lon:-90.411},
-            {name:"Canton, OH",lat:40.798,lon:-81.378},
-            {name:"Cheektowaga, NY",lat:42.903,lon:-78.754},
-            {name:"Columbus, OH",lat:39.961,lon:-82.999},
-            {name:"El Paso, TX",lat:31.761,lon:-106.485},
-            {name:"Flushing, NY",lat:40.765,lon:-73.824},
-            {name:"Greensboro, NC",lat:36.072,lon:-79.792},
-            {name:"Louisville, KY",lat:38.252,lon:-85.758},
-            {name:"Middletown, NY",lat:41.445,lon:-74.422},
-            {name:"Morrisville, NC",lat:35.822,lon:-78.826},
-            {name:"Orlando, FL",lat:28.538,lon:-81.379},
-            {name:"San Antonio, TX",lat:29.425,lon:-98.494},
-            {name:"St. Petersburg, FL",lat:27.767,lon:-82.640}
+        siteIds: [
+            "bridgetonMO", "cantonOH", "cheektowagaNY", "columbusOH",
+            "elPasoTX", "flushingNY", "greensboroNC", "louisvilleKY",
+            "middletownNY", "morrisvilleNC", "orlandoFL", "sanAntonioTX",
+            "stPetersburgFL"
         ]
     }
 };
 
+function getCategorySites(categoryKey){
+    const category = SITE_CATEGORIES[categoryKey];
+    if(!category) return [];
+
+    return category.siteIds.map(siteId => ({
+        id: siteId,
+        ...SITES[siteId]
+    }));
+}
+
 /* =========================
-   APP STATE
+   APP STATE + CACHES
 ========================= */
 const DEFAULT_CATEGORY_KEY = "technicalSupport";
 
 let currentCategoryKey = DEFAULT_CATEGORY_KEY;
-let currentGroup = SITE_CATEGORIES[currentCategoryKey].sites;
+let currentGroup = getCategorySites(currentCategoryKey);
 let planningMode = "daily";
 let loadRunId = 0;
+let activeLoadController = null;
+
+const weatherCache = new Map();
+const nwsCache = new Map();
+
+function readCache(cache, key, maxAgeMs){
+    const entry = cache.get(key);
+    if(!entry) return {hit:false, value:null};
+
+    if(Date.now() - entry.fetchedAt > maxAgeMs){
+        cache.delete(key);
+        return {hit:false, value:null};
+    }
+
+    return {hit:true, value:entry.value};
+}
+
+function writeCache(cache, key, value){
+    cache.set(key, {
+        fetchedAt: Date.now(),
+        value
+    });
+}
 
 /* =========================
    CATEGORY DROPDOWN
@@ -364,112 +423,111 @@ function sumSnowInchesWindow(hourDates, hourlySnow, now, hoursBack){
 }
 
 /* =========================
-   NWS ALERT OVERRIDE
-   - Any active alert => Yellow
-   - If alert matches redEvents => Red
+   NWS ALERTS
+   - Cached for a short period
+   - Loaded after the weather card renders
+   - Never blocks visible weather data
 ========================= */
 function classifyNWSEvent(eventName){
-    const e = (eventName || "").toLowerCase();
-    const redEvents = [
-        "blizzard warning",
-        "ice storm warning",
-        "winter storm warning",
-        "snow squall warning"
-    ];
-    if(redEvents.some(x => e.includes(x))) return "red";
-    return null;
+    const event = (eventName || "").toLowerCase();
+    return IMPACT_RULES.nwsRedEvents.some(name => event.includes(name)) ? "red" : null;
 }
 
-async function fetchNWSAlertSummary(lat, lon){
+async function fetchNWSAlertSummary(loc, signal){
+    const cached = readCache(nwsCache, loc.id, APP_CONFIG.nwsCacheMs);
+    if(cached.hit) return cached.value;
+
+    const url = `https://api.weather.gov/alerts/active?point=${loc.lat},${loc.lon}`;
+
     try{
-        const url = `https://api.weather.gov/alerts/active?point=${lat},${lon}`;
-        const r = await fetch(url, {
+        const response = await fetch(url, {
+            signal,
             headers: {
-                "User-Agent": "WeatherImpactDashboard (browser)",
                 "Accept": "application/geo+json"
             }
         });
-        if(!r.ok) return null;
 
-        const ignoredNWSEvents = [
-            "rip current statement",
-            "rip current risk",
-            "rip current advisory",
-            "beach hazards statement",
-            "small craft advisory",
-            "coastal flood advisory",
-            "costal flood advisory"
-        ];
+        if(!response.ok){
+            writeCache(nwsCache, loc.id, null);
+            return null;
+        }
 
-        const d = await r.json();
-        const features = (d && d.features ? d.features : []).filter(f => {
-            const e = (f?.properties?.event || "").toLowerCase();
-            return !ignoredNWSEvents.some(x => e.includes(x));
+        const data = await response.json();
+        const features = (data && data.features ? data.features : []).filter(feature => {
+            const event = (feature?.properties?.event || "").toLowerCase();
+            return !IMPACT_RULES.ignoredNWSEvents.some(name => event.includes(name));
         });
 
-        if(!features.length) return null;
+        if(!features.length){
+            writeCache(nwsCache, loc.id, null);
+            return null;
+        }
 
         let best = {
             level: "yellow",
-            headline: (features[0]?.properties?.headline)
-                      || (features[0]?.properties?.event)
-                      || "Active NWS Alert"
+            headline: features[0]?.properties?.headline
+                || features[0]?.properties?.event
+                || "Active NWS Alert"
         };
 
-        for(const f of features){
-            const p = f?.properties || {};
-            const event = p.event || "";
-            const level = classifyNWSEvent(event);
+        for(const feature of features){
+            const properties = feature?.properties || {};
+            const event = properties.event || "";
 
-            if(level === "red"){
+            if(classifyNWSEvent(event) === "red"){
                 best = {
                     level: "red",
-                    headline: p.headline || event || "Active NWS Alert"
+                    headline: properties.headline || event || "Active NWS Alert"
                 };
                 break;
             }
 
-            if(p.headline || p.event){
-                best.headline = p.headline || p.event;
+            if(properties.headline || properties.event){
+                best.headline = properties.headline || properties.event;
             }
         }
 
+        writeCache(nwsCache, loc.id, best);
         return best;
-    }catch(e){
+    }catch(error){
+        if(error?.name === "AbortError") throw error;
         return null;
     }
 }
 
-/* =========================
-   BACKGROUND NWS ALERT UPDATE
-   Weather cards render from Open-Meteo first. Alerts are then applied when ready.
-========================= */
-async function applyNWSAlertToCard(card, loc, expectedRunId){
-    const nws = await fetchNWSAlertSummary(loc.lat, loc.lon);
-
-    if(expectedRunId !== loadRunId || !nws || !nws.level || !card.isConnected){
-        return;
-    }
+function applyNWSAlertToCard(card, nws, expectedRunId){
+    if(!nws || expectedRunId !== loadRunId || !card.isConnected) return;
 
     card.classList.remove("red-mode", "yellow-mode", "green-mode");
     card.classList.add(nws.level + "-mode");
 
-    if(card.querySelector(".alert-box")) return;
+    let alertBox = card.querySelector(".alert-box");
+    if(!alertBox){
+        alertBox = document.createElement("div");
+        alertBox.className = "alert-box";
 
-    const alertBox = document.createElement("div");
-    alertBox.className = "alert-box";
+        const info = card.querySelector(".more-info");
+        if(info){
+            info.insertAdjacentElement("afterend", alertBox);
+        }else{
+            card.prepend(alertBox);
+        }
+    }
 
+    alertBox.replaceChildren();
     const label = document.createElement("b");
     label.textContent = "Active NWS Alert: ";
+    alertBox.append(label, document.createTextNode(nws.headline));
+}
 
-    alertBox.appendChild(label);
-    alertBox.appendChild(document.createTextNode(nws.headline || "Active NWS Alert"));
-
-    const infoRow = card.querySelector(".more-info-row");
-    if(infoRow){
-        infoRow.insertAdjacentElement("afterend", alertBox);
-    }else{
-        card.prepend(alertBox);
+async function updateCardWithNWS(card, loc, expectedRunId, signal){
+    try{
+        const nws = await fetchNWSAlertSummary(loc, signal);
+        applyNWSAlertToCard(card, nws, expectedRunId);
+    }catch(error){
+        if(error?.name !== "AbortError"){
+            console.warn(`NWS alert lookup failed for ${loc.name}`, error);
+        }
     }
 }
 
@@ -477,143 +535,196 @@ async function applyNWSAlertToCard(card, loc, expectedRunId){
 function dominantWeather(codes){
     if(!codes || !codes.length) return 0;
 
-    const f = {};
-    for(const x of codes){
-        f[x] = (f[x] || 0) + 1;
+    const frequency = {};
+    for(const code of codes){
+        frequency[code] = (frequency[code] || 0) + 1;
     }
 
-    return +Object.keys(f).reduce((a,b) => f[a] >= f[b] ? a : b);
+    return +Object.keys(frequency).reduce((a,b) => frequency[a] >= frequency[b] ? a : b);
 }
 
 function impactFromConditions(codeNow, snow72In, temp){
-    if(temp<=10) return "red";
-    if([56,57,66,67].includes(codeNow)) return "red";
-    if(snow72In >= 3) return "red";
-    if([95,96,99].includes(codeNow)) return "red";
+    if(temp <= IMPACT_RULES.severeColdF) return "red";
+    if(IMPACT_RULES.dailyRedCodes.includes(codeNow)) return "red";
+    if(snow72In >= IMPACT_RULES.severeSnow72In) return "red";
 
-    if([71,73,75,85,86,45,48].includes(codeNow)) return "yellow";
-    if(temp<=32 && [61,63,65,80,81,82].includes(codeNow)) return "yellow";
+    if(IMPACT_RULES.dailyYellowCodes.includes(codeNow)) return "yellow";
+    if(temp <= IMPACT_RULES.freezingF && IMPACT_RULES.rainCodes.includes(codeNow)) return "yellow";
 
     return "green";
 }
 
-function otImpactFromTenDay(codes, highs, lows){
-    let red=false,yellow=false;
+function otImpactFromTenDay(codes, lows){
+    let red = false;
+    let yellow = false;
+    const dayCount = Math.min(APP_CONFIG.forecastDays, codes.length, lows.length);
 
-    for(let i=0;i<11;i++){
+    for(let i=0; i<dayCount; i++){
         const code = codes[i];
-        const lo = lows[i];
+        const low = lows[i];
 
-        if([56,57,66,67,75,82,86,95,96,99].includes(code)) red=true;
-        if(lo<=10) red=true;
+        if(IMPACT_RULES.tenDayRedCodes.includes(code)) red = true;
+        if(low <= IMPACT_RULES.severeColdF) red = true;
 
-        if([71,73,77,85,45,48].includes(code)) yellow=true;
-        if(lo<=32 && [61,63,65,80,81].includes(code)) yellow=true;
+        if(IMPACT_RULES.tenDayYellowCodes.includes(code)) yellow = true;
+        if(low <= IMPACT_RULES.freezingF && IMPACT_RULES.rainCodes.includes(code)) yellow = true;
     }
 
     return red ? "red" : yellow ? "yellow" : "green";
 }
 
-/* FULL WEATHER CARD */
-async function loadWeatherCard(card, loc, expectedRunId){
-    try{
-        const now = new Date();
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&hourly=temperature_2m,weather_code,snowfall&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,snowfall_sum&forecast_days=11&temperature_unit=fahrenheit&timezone=auto`;
+/* =========================
+   WEATHER DATA
+========================= */
+function buildWeatherUrl(loc){
+    const params = new URLSearchParams({
+        latitude: loc.lat,
+        longitude: loc.lon,
+        hourly: "temperature_2m,weather_code,snowfall",
+        current: "temperature_2m,weather_code",
+        daily: "weather_code,temperature_2m_max,temperature_2m_min",
+        forecast_days: APP_CONFIG.forecastDays,
+        temperature_unit: "fahrenheit",
+        timezone: "auto",
+        timeformat: "unixtime"
+    });
 
-        /*
-           Load Open-Meteo first so the card can render immediately.
-           NWS alerts are fetched after rendering and applied in the background.
-        */
-        const data = await fetch(url).then(r => {
-            if(!r.ok) throw new Error("Open-Meteo request failed");
-            return r.json();
-        });
+    return `https://api.open-meteo.com/v1/forecast?${params.toString()}`;
+}
 
-        /*
-           If the user changed category or mode while requests were still running,
-           skip drawing stale results into the page.
-        */
-        if(expectedRunId !== loadRunId) return;
+async function fetchWeatherData(loc, signal){
+    const cached = readCache(weatherCache, loc.id, APP_CONFIG.weatherCacheMs);
+    if(cached.hit) return cached.value;
 
-        const codeNow = data.current.weather_code;
-        const tempNow = Math.round(data.current.temperature_2m);
+    const response = await fetch(buildWeatherUrl(loc), {signal});
+    if(!response.ok) throw new Error(`Open-Meteo request failed (${response.status})`);
 
-        const codeToday = data.daily.weather_code[0];
-        const codeTomorrow = data.daily.weather_code[1];
-        const todayHigh = Math.round(data.daily.temperature_2m_max[0]);
-        const todayLow = Math.round(data.daily.temperature_2m_min[0]);
-        const tomHigh = Math.round(data.daily.temperature_2m_max[1]);
-        const tomLow = Math.round(data.daily.temperature_2m_min[1]);
+    const data = await response.json();
+    if(data?.error) throw new Error(data.reason || "Open-Meteo returned an error");
 
-        const hours = data.hourly.time.map(t => new Date(t));
-        const hSnow = data.hourly.snowfall;
-        const hCodes = data.hourly.weather_code;
-        const hTemps = data.hourly.temperature_2m;
+    writeCache(weatherCache, loc.id, data);
+    return data;
+}
 
-        const snow72In = sumSnowInchesWindow(hours, hSnow, now, 72);
+function getHourlyWindowData(data){
+    const nowMs = Date.now();
+    const hourTimesMs = data.hourly.time.map(unixSeconds => Number(unixSeconds) * 1000);
+    const snow = data.hourly.snowfall;
+    const codes = data.hourly.weather_code;
+    const temperatures = data.hourly.temperature_2m;
 
-        const last6Codes=[], last6Temps=[], next6Codes=[], next6Temps=[];
-        for(let i=0;i<hours.length;i++){
-            const diff=(now-hours[i])/3600000;
-            if(diff<=6&&diff>=0){ last6Codes.push(hCodes[i]); last6Temps.push(hTemps[i]); }
-            if(diff<0&&diff>=-6){ next6Codes.push(hCodes[i]); next6Temps.push(hTemps[i]); }
+    let snow72In = 0;
+    const last6Codes = [];
+    const last6Temps = [];
+    const next6Codes = [];
+    const next6Temps = [];
+
+    for(let i=0; i<hourTimesMs.length; i++){
+        const diffHours = (nowMs - hourTimesMs[i]) / 3600000;
+
+        if(diffHours >= 0 && diffHours <= 72){
+            snow72In += snowCmToIn(snow[i]);
         }
 
-        const last6Dom=dominantWeather(last6Codes);
-        const next6Dom=dominantWeather(next6Codes);
-        const last6Avg=last6Temps.length?Math.round(last6Temps.reduce((a,b)=>a+b)/last6Temps.length):0;
-        const next6Avg=next6Temps.length?Math.round(next6Temps.reduce((a,b)=>a+b)/next6Temps.length):0;
+        if(diffHours >= 0 && diffHours <= 6){
+            last6Codes.push(codes[i]);
+            last6Temps.push(temperatures[i]);
+        }
 
-        let impact = (planningMode==="daily")
-            ? impactFromConditions(codeNow, snow72In, tempNow)
-            : otImpactFromTenDay(
-                data.daily.weather_code.slice(0,11),
-                data.daily.temperature_2m_max.slice(0,11),
-                data.daily.temperature_2m_min.slice(0,11)
-            );
+        if(diffHours < 0 && diffHours >= -6){
+            next6Codes.push(codes[i]);
+            next6Temps.push(temperatures[i]);
+        }
+    }
 
-        card.className = "card " + impact + "-mode";
+    return {
+        snow72In,
+        last6Dom: dominantWeather(last6Codes),
+        next6Dom: dominantWeather(next6Codes),
+        last6Avg: last6Temps.length
+            ? Math.round(last6Temps.reduce((a,b) => a+b, 0) / last6Temps.length)
+            : null,
+        next6Avg: next6Temps.length
+            ? Math.round(next6Temps.reduce((a,b) => a+b, 0) / next6Temps.length)
+            : null
+    };
+}
 
-        card.innerHTML = `
-            <div class="city">${loc.name}</div>
-            <div class="more-info-row" style="font-size:0.85em;">
-                <a target="_blank" href="https://forecast.weather.gov/MapClick.php?lat=${loc.lat}&lon=${loc.lon}">
-                    More info
-                </a>
-            </div>
+function formatTemperature(value){
+    return Number.isFinite(value) ? `${value}°F` : "Unavailable";
+}
 
-            <div class="section-label">Right Now:</div>
-            <span style="font-size:1.3em;">${weatherIcon[codeNow]||""}</span>
-            ${weatherText[codeNow] || "Unknown"}, ${tempNow}°F
+function renderWeatherCard(card, loc, data, expectedRunId, signal){
+    if(expectedRunId !== loadRunId) return;
 
-            <div class="section-label">Last 6 Hours:</div>
-            ${weatherText[last6Dom] || "Unknown"} — ${last6Avg}°F
+    const codeNow = data.current.weather_code;
+    const tempNow = Math.round(data.current.temperature_2m);
 
-            <div class="section-label">Next 6 Hours:</div>
-            ${weatherText[next6Dom] || "Unknown"} — ${next6Avg}°F
+    const codeToday = data.daily.weather_code[0];
+    const codeTomorrow = data.daily.weather_code[1];
+    const todayHigh = Math.round(data.daily.temperature_2m_max[0]);
+    const todayLow = Math.round(data.daily.temperature_2m_min[0]);
+    const tomorrowHigh = Math.round(data.daily.temperature_2m_max[1]);
+    const tomorrowLow = Math.round(data.daily.temperature_2m_min[1]);
 
-            <div class="section-label">Today:</div>
-            ${weatherText[codeToday] || "Unknown"} (H ${todayHigh} / L ${todayLow})
+    const hourly = getHourlyWindowData(data);
 
-            <div class="section-label">Tomorrow:</div>
-            ${weatherText[codeTomorrow] || "Unknown"} (H ${tomHigh} / L ${tomLow})
+    const impact = planningMode === "daily"
+        ? impactFromConditions(codeNow, hourly.snow72In, tempNow)
+        : otImpactFromTenDay(
+            data.daily.weather_code.slice(0, APP_CONFIG.forecastDays),
+            data.daily.temperature_2m_min.slice(0, APP_CONFIG.forecastDays)
+        );
 
-            <div style="margin-top:10px;">
-                <button class="tenDayBtn">Show 10-Day Forecast</button>
-            </div>
+    card.className = "card " + impact + "-mode";
+    card.dataset.baseImpact = impact;
 
-            <div class="ten-day"></div>
-        `;
+    card.innerHTML = `
+        <div class="city">${loc.name}</div>
+        <div class="more-info" style="font-size:0.85em;">
+            <a target="_blank" rel="noopener noreferrer"
+               href="https://forecast.weather.gov/MapClick.php?lat=${loc.lat}&lon=${loc.lon}">
+                More info
+            </a>
+        </div>
 
-        const btn = card.querySelector(".tenDayBtn");
-        const panel = card.querySelector(".ten-day");
-        btn.onclick = () => togglePanel(panel, btn, data);
+        <div class="section-label">Right Now:</div>
+        <span style="font-size:1.3em;">${weatherIcon[codeNow] || ""}</span>
+        ${weatherText[codeNow] || "Unknown"}, ${tempNow}°F
 
-        /* Do not make the user wait for weather.gov. */
-        applyNWSAlertToCard(card, loc, expectedRunId);
+        <div class="section-label">Last 6 Hours:</div>
+        ${weatherText[hourly.last6Dom] || "Unknown"} — ${formatTemperature(hourly.last6Avg)}
 
-    }catch(e){
-        if(expectedRunId !== loadRunId) return;
+        <div class="section-label">Next 6 Hours:</div>
+        ${weatherText[hourly.next6Dom] || "Unknown"} — ${formatTemperature(hourly.next6Avg)}
+
+        <div class="section-label">Today:</div>
+        ${weatherText[codeToday] || "Unknown"} (H ${todayHigh} / L ${todayLow})
+
+        <div class="section-label">Tomorrow:</div>
+        ${weatherText[codeTomorrow] || "Unknown"} (H ${tomorrowHigh} / L ${tomorrowLow})
+
+        <div style="margin-top:10px;">
+            <button class="tenDayBtn">Show 10-Day Forecast</button>
+        </div>
+
+        <div class="ten-day"></div>
+    `;
+
+    const button = card.querySelector(".tenDayBtn");
+    const panel = card.querySelector(".ten-day");
+    button.onclick = () => togglePanel(panel, button, data);
+
+    /* NWS intentionally runs after visible weather renders. */
+    void updateCardWithNWS(card, loc, expectedRunId, signal);
+}
+
+async function loadWeatherCard(card, loc, expectedRunId, signal){
+    try{
+        const data = await fetchWeatherData(loc, signal);
+        renderWeatherCard(card, loc, data, expectedRunId, signal);
+    }catch(error){
+        if(error?.name === "AbortError" || expectedRunId !== loadRunId) return;
 
         card.className = "card yellow-mode";
         card.innerHTML = `
@@ -622,20 +733,33 @@ async function loadWeatherCard(card, loc, expectedRunId){
                 <b>Weather unavailable:</b> Could not load weather data for this site.
             </div>
             <div style="font-size:0.85em;margin-top:8px;">
-                <a target="_blank" href="https://forecast.weather.gov/MapClick.php?lat=${loc.lat}&lon=${loc.lon}">
+                <a target="_blank" rel="noopener noreferrer"
+                   href="https://forecast.weather.gov/MapClick.php?lat=${loc.lat}&lon=${loc.lon}">
                     More info
                 </a>
             </div>
         `;
+
+        console.error(`Weather load failed for ${loc.name}`, error);
     }
 }
 
-/* LOAD WEATHER FOR CURRENT GROUP
-   Cards are created immediately. All Open-Meteo requests load in parallel,
-   while NWS alerts update separately in the background.
-*/
+/* =========================
+   LOAD CURRENT CATEGORY
+   - All cards appear immediately
+   - Weather requests run in parallel
+   - Previous category/mode requests are cancelled
+   - Cached categories and mode changes redraw immediately
+========================= */
 async function loadWeather(){
+    if(activeLoadController){
+        activeLoadController.abort();
+    }
+
+    activeLoadController = new AbortController();
+    const signal = activeLoadController.signal;
     const runId = ++loadRunId;
+
     const grid = document.getElementById("weatherGrid");
     grid.innerHTML = "";
 
@@ -651,7 +775,7 @@ async function loadWeather(){
     });
 
     await Promise.allSettled(
-        cards.map(({card, loc}) => loadWeatherCard(card, loc, runId))
+        cards.map(({card, loc}) => loadWeatherCard(card, loc, runId, signal))
     );
 
     if(runId === loadRunId){
@@ -669,16 +793,13 @@ function togglePanel(panel, btn, data){
     }
 
     let html="";
-    for(let d=0; d<=10; d++){
-        /*
-           Date strings from daily.time are YYYY-MM-DD.
-           Creating from split parts prevents browser timezone shifting.
-        */
-        const parts = data.daily.time[d].split("-").map(Number);
-        const date = new Date(parts[0], parts[1] - 1, parts[2]);
+    for(let d=0; d<Math.min(APP_CONFIG.forecastDays, data.daily.time.length); d++){
+        /* Daily UNIX values are UTC; apply the site's returned offset for its local date. */
+        const localUnixSeconds = Number(data.daily.time[d]) + Number(data.utc_offset_seconds || 0);
+        const date = new Date(localUnixSeconds * 1000);
 
         const label = date.toLocaleDateString("en-US", {
-            weekday:"short", month:"short", day:"numeric"
+            weekday:"short", month:"short", day:"numeric", timeZone:"UTC"
         });
 
         html += `
@@ -721,7 +842,7 @@ document.getElementById("expandAll").onclick=()=>{
 /* GROUP SELECTOR */
 document.getElementById("groupSelector").onchange = function () {
     currentCategoryKey = this.value;
-    currentGroup = SITE_CATEGORIES[currentCategoryKey].sites;
+    currentGroup = getCategorySites(currentCategoryKey);
     loadWeather();
 };
 
