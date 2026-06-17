@@ -514,11 +514,15 @@ const weatherIcon={0:"☀️",1:"🌤",2:"⛅",3:"☁️",45:"🌫",48:"🌫",
    - APP_CONFIG: cache durations and API request size
    - IMPACT_RULES: red/yellow weather thresholds
    - SITES / SITE_CATEGORIES: locations and category membership
+
+   New SITES entries can normally use only {name:"City, ST"}. Coordinates
+   are found automatically and cached in the browser.
 ========================= */
 const APP_CONFIG = {
     forecastDays: 11,
     weatherCacheMs: 10 * 60 * 1000,
-    nwsCacheMs: 5 * 60 * 1000
+    nwsCacheMs: 5 * 60 * 1000,
+    geocodeCacheVersion: 1
 };
 
 const IMPACT_RULES = {
@@ -554,8 +558,27 @@ const IMPACT_RULES = {
 /* =========================
    MASTER SITE REGISTRY
 
-   Each site's coordinates are defined once. Categories below reference
-   these site IDs, so coordinate corrections only need to be made here.
+   EASY WAY TO ADD A SITE — NO LATITUDE OR LONGITUDE REQUIRED:
+
+       denverCO: {name:"Denver, CO"},
+
+   The dashboard reads the city and two-letter state from the name, finds
+   the coordinates automatically, and saves them in this browser.
+
+   For an ambiguous city, add a ZIP code:
+
+       springfieldMO: {name:"Springfield, MO", zip:"65806"},
+
+   If the display name is not a normal "City, ST" name, provide search/state:
+
+       denverOffice: {name:"Denver Office", search:"Denver", state:"CO"},
+
+   Manual coordinates are still supported as an optional override:
+
+       remoteOffice: {name:"Remote Office", lat:39.7392, lon:-104.9903},
+
+   Existing sites keep their known coordinates for maximum speed. New sites
+   may omit lat/lon and will be geocoded automatically.
 ========================= */
 const SITES = {
     albanyNY:          {name:"Albany, NY", lat:42.6526, lon:-73.7562},
@@ -680,6 +703,8 @@ let activeLoadController = null;
 
 const weatherCache = new Map();
 const nwsCache = new Map();
+const geocodeMemoryCache = new Map();
+const geocodeInFlight = new Map();
 
 function readCache(cache, key, maxAgeMs){
     const entry = cache.get(key);
@@ -698,6 +723,237 @@ function writeCache(cache, key, value){
         fetchedAt: Date.now(),
         value
     });
+}
+
+
+/* =========================
+   AUTOMATIC SITE GEOCODING
+
+   Resolution order:
+   1. Manual lat/lon, when supplied
+   2. In-memory coordinate cache
+   3. Browser localStorage coordinate cache
+   4. ZIP-code lookup
+   5. City/state lookup
+
+   This lets new sites use only: {name:"Denver, CO"}
+========================= */
+const STATE_NAMES = {
+    AL:"Alabama", AK:"Alaska", AZ:"Arizona", AR:"Arkansas", CA:"California",
+    CO:"Colorado", CT:"Connecticut", DE:"Delaware", FL:"Florida", GA:"Georgia",
+    HI:"Hawaii", ID:"Idaho", IL:"Illinois", IN:"Indiana", IA:"Iowa",
+    KS:"Kansas", KY:"Kentucky", LA:"Louisiana", ME:"Maine", MD:"Maryland",
+    MA:"Massachusetts", MI:"Michigan", MN:"Minnesota", MS:"Mississippi",
+    MO:"Missouri", MT:"Montana", NE:"Nebraska", NV:"Nevada", NH:"New Hampshire",
+    NJ:"New Jersey", NM:"New Mexico", NY:"New York", NC:"North Carolina",
+    ND:"North Dakota", OH:"Ohio", OK:"Oklahoma", OR:"Oregon", PA:"Pennsylvania",
+    RI:"Rhode Island", SC:"South Carolina", SD:"South Dakota", TN:"Tennessee",
+    TX:"Texas", UT:"Utah", VT:"Vermont", VA:"Virginia", WA:"Washington",
+    WV:"West Virginia", WI:"Wisconsin", WY:"Wyoming", DC:"District of Columbia"
+};
+
+const STATE_ABBREVIATIONS = Object.fromEntries(
+    Object.entries(STATE_NAMES).map(([abbr, fullName]) => [fullName.toLowerCase(), abbr])
+);
+
+function normalizeText(value){
+    return String(value || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
+}
+
+function parseSiteLocationParts(site){
+    let city = String(site.city || site.search || "").trim();
+    let state = String(site.state || "").trim().toUpperCase();
+    const zip = String(site.zip || "").trim();
+
+    if((!city || !state) && site.name){
+        const parts = String(site.name).split(",").map(part => part.trim()).filter(Boolean);
+        if(parts.length >= 2){
+            if(!city) city = parts.slice(0, -1).join(", ");
+            if(!state){
+                const statePart = parts.at(-1);
+                state = statePart.length === 2
+                    ? statePart.toUpperCase()
+                    : (STATE_ABBREVIATIONS[statePart.toLowerCase()] || "");
+            }
+        }
+    }
+
+    return {city, state, zip};
+}
+
+function locationDefinitionSignature(site){
+    const parts = parseSiteLocationParts(site);
+    return JSON.stringify({
+        id: site.id,
+        name: site.name || "",
+        city: parts.city,
+        state: parts.state,
+        zip: parts.zip,
+        search: site.search || ""
+    });
+}
+
+function geocodeStorageKey(site){
+    return `weather-geocode-v${APP_CONFIG.geocodeCacheVersion}:${site.id}`;
+}
+
+function readStoredCoordinates(site){
+    try{
+        const raw = localStorage.getItem(geocodeStorageKey(site));
+        if(!raw) return null;
+
+        const stored = JSON.parse(raw);
+        if(stored.signature !== locationDefinitionSignature(site)) return null;
+        if(!Number.isFinite(stored.lat) || !Number.isFinite(stored.lon)) return null;
+
+        return {
+            lat: stored.lat,
+            lon: stored.lon,
+            timezone: stored.timezone || null
+        };
+    }catch(error){
+        return null;
+    }
+}
+
+function storeCoordinates(site, coordinates){
+    try{
+        localStorage.setItem(
+            geocodeStorageKey(site),
+            JSON.stringify({
+                signature: locationDefinitionSignature(site),
+                lat: coordinates.lat,
+                lon: coordinates.lon,
+                timezone: coordinates.timezone || null
+            })
+        );
+    }catch(error){
+        /* localStorage may be unavailable; the in-memory cache still works. */
+    }
+}
+
+function resultMatchesState(result, stateAbbreviation){
+    if(!stateAbbreviation) return true;
+
+    const expectedFullName = STATE_NAMES[stateAbbreviation];
+    if(!expectedFullName) return true;
+
+    return normalizeText(result.admin1) === normalizeText(expectedFullName);
+}
+
+async function searchOpenMeteoLocation(query, stateAbbreviation, preferredCity, signal){
+    const params = new URLSearchParams({
+        name: query,
+        count: "10",
+        language: "en",
+        format: "json",
+        countryCode: "US"
+    });
+
+    const response = await fetch(
+        `https://geocoding-api.open-meteo.com/v1/search?${params.toString()}`,
+        {signal}
+    );
+
+    if(!response.ok){
+        throw new Error(`Location lookup failed (${response.status})`);
+    }
+
+    const data = await response.json();
+    const results = Array.isArray(data?.results) ? data.results : [];
+    const stateMatches = results.filter(result =>
+        result.country_code === "US" && resultMatchesState(result, stateAbbreviation)
+    );
+
+    if(!stateMatches.length) return null;
+
+    const normalizedPreferredCity = normalizeText(preferredCity);
+    const exactCity = normalizedPreferredCity
+        ? stateMatches.find(result => normalizeText(result.name) === normalizedPreferredCity)
+        : null;
+
+    const match = exactCity || stateMatches[0];
+    if(!Number.isFinite(match.latitude) || !Number.isFinite(match.longitude)) return null;
+
+    return {
+        lat: Number(match.latitude),
+        lon: Number(match.longitude),
+        timezone: match.timezone || null
+    };
+}
+
+async function performSiteGeocoding(site, signal){
+    const {city, state, zip} = parseSiteLocationParts(site);
+
+    if(!city && !zip){
+        throw new Error(
+            `${site.name} needs either a normal "City, ST" name, a ZIP code, or manual coordinates.`
+        );
+    }
+
+    /* ZIP is the least ambiguous lookup, so try it first. */
+    if(zip){
+        const zipMatch = await searchOpenMeteoLocation(zip, state, city, signal);
+        if(zipMatch) return zipMatch;
+    }
+
+    /* Fall back to the supplied search term or the city parsed from name. */
+    const cityQuery = String(site.search || city).trim();
+    if(cityQuery){
+        const cityMatch = await searchOpenMeteoLocation(cityQuery, state, city, signal);
+        if(cityMatch) return cityMatch;
+    }
+
+    throw new Error(`No matching U.S. location was found for ${site.name}.`);
+}
+
+async function resolveSiteLocation(site, signal){
+    const manualLat = Number(site.lat);
+    const manualLon = Number(site.lon);
+
+    if(Number.isFinite(manualLat) && Number.isFinite(manualLon)){
+        return {...site, lat:manualLat, lon:manualLon};
+    }
+
+    const memoryHit = geocodeMemoryCache.get(site.id);
+    if(memoryHit){
+        return {...site, ...memoryHit};
+    }
+
+    const storedHit = readStoredCoordinates(site);
+    if(storedHit){
+        geocodeMemoryCache.set(site.id, storedHit);
+        return {...site, ...storedHit};
+    }
+
+    const existingLookup = geocodeInFlight.get(site.id);
+    if(existingLookup && existingLookup.signal === signal && !signal.aborted){
+        const sharedCoordinates = await existingLookup.promise;
+        return {...site, ...sharedCoordinates};
+    }
+
+    const lookupPromise = performSiteGeocoding(site, signal)
+        .then(coordinates => {
+            geocodeMemoryCache.set(site.id, coordinates);
+            storeCoordinates(site, coordinates);
+            return coordinates;
+        })
+        .finally(() => {
+            const currentLookup = geocodeInFlight.get(site.id);
+            if(currentLookup?.promise === lookupPromise){
+                geocodeInFlight.delete(site.id);
+            }
+        });
+
+    geocodeInFlight.set(site.id, {promise:lookupPromise, signal});
+    const coordinates = await lookupPromise;
+    return {...site, ...coordinates};
 }
 
 /* =========================
@@ -747,7 +1003,8 @@ function classifyNWSEvent(eventName){
 }
 
 async function fetchNWSAlertSummary(loc, signal){
-    const cached = readCache(nwsCache, loc.id, APP_CONFIG.nwsCacheMs);
+    const cacheKey = `${loc.id}:${Number(loc.lat).toFixed(4)},${Number(loc.lon).toFixed(4)}`;
+    const cached = readCache(nwsCache, cacheKey, APP_CONFIG.nwsCacheMs);
     if(cached.hit) return cached.value;
 
     const url = `https://api.weather.gov/alerts/active?point=${loc.lat},${loc.lon}`;
@@ -761,7 +1018,7 @@ async function fetchNWSAlertSummary(loc, signal){
         });
 
         if(!response.ok){
-            writeCache(nwsCache, loc.id, null);
+            writeCache(nwsCache, cacheKey, null);
             return null;
         }
 
@@ -772,7 +1029,7 @@ async function fetchNWSAlertSummary(loc, signal){
         });
 
         if(!features.length){
-            writeCache(nwsCache, loc.id, null);
+            writeCache(nwsCache, cacheKey, null);
             return null;
         }
 
@@ -800,7 +1057,7 @@ async function fetchNWSAlertSummary(loc, signal){
             }
         }
 
-        writeCache(nwsCache, loc.id, best);
+        writeCache(nwsCache, cacheKey, best);
         return best;
     }catch(error){
         if(error?.name === "AbortError") throw error;
@@ -906,7 +1163,8 @@ function buildWeatherUrl(loc){
 }
 
 async function fetchWeatherData(loc, signal){
-    const cached = readCache(weatherCache, loc.id, APP_CONFIG.weatherCacheMs);
+    const cacheKey = `${loc.id}:${Number(loc.lat).toFixed(4)},${Number(loc.lon).toFixed(4)}`;
+    const cached = readCache(weatherCache, cacheKey, APP_CONFIG.weatherCacheMs);
     if(cached.hit) return cached.value;
 
     const response = await fetch(buildWeatherUrl(loc), {signal});
@@ -915,7 +1173,7 @@ async function fetchWeatherData(loc, signal){
     const data = await response.json();
     if(data?.error) throw new Error(data.reason || "Open-Meteo returned an error");
 
-    writeCache(weatherCache, loc.id, data);
+    writeCache(weatherCache, cacheKey, data);
     return data;
 }
 
@@ -1033,25 +1291,51 @@ function renderWeatherCard(card, loc, data, expectedRunId, signal){
 }
 
 async function loadWeatherCard(card, loc, expectedRunId, signal){
+    let resolvedLoc = null;
+
     try{
-        const data = await fetchWeatherData(loc, signal);
-        renderWeatherCard(card, loc, data, expectedRunId, signal);
+        resolvedLoc = await resolveSiteLocation(loc, signal);
+        if(expectedRunId !== loadRunId) return;
+
+        const data = await fetchWeatherData(resolvedLoc, signal);
+        renderWeatherCard(card, resolvedLoc, data, expectedRunId, signal);
     }catch(error){
         if(error?.name === "AbortError" || expectedRunId !== loadRunId) return;
 
         card.className = "card yellow-mode";
-        card.innerHTML = `
-            <div class="city">${loc.name}</div>
-            <div class="alert-box">
-                <b>Weather unavailable:</b> Could not load weather data for this site.
-            </div>
-            <div style="font-size:0.85em;margin-top:8px;">
-                <a target="_blank" rel="noopener noreferrer"
-                   href="https://forecast.weather.gov/MapClick.php?lat=${loc.lat}&lon=${loc.lon}">
-                    More info
-                </a>
-            </div>
-        `;
+        card.replaceChildren();
+
+        const city = document.createElement("div");
+        city.className = "city";
+        city.textContent = loc.name;
+
+        const alert = document.createElement("div");
+        alert.className = "alert-box";
+
+        const label = document.createElement("b");
+        const isLocationError = !resolvedLoc;
+        label.textContent = isLocationError ? "Location unavailable: " : "Weather unavailable: ";
+
+        const message = isLocationError
+            ? (error?.message || "Could not find this site. Add a ZIP code or manual coordinates.")
+            : "Could not load weather data for this site.";
+
+        alert.append(label, document.createTextNode(message));
+        card.append(city, alert);
+
+        if(resolvedLoc){
+            const info = document.createElement("div");
+            info.style.cssText = "font-size:0.85em;margin-top:8px;";
+
+            const link = document.createElement("a");
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            link.href = `https://forecast.weather.gov/MapClick.php?lat=${resolvedLoc.lat}&lon=${resolvedLoc.lon}`;
+            link.textContent = "More info";
+
+            info.append(link);
+            card.append(info);
+        }
 
         console.error(`Weather load failed for ${loc.name}`, error);
     }
