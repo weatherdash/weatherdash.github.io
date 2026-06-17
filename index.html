@@ -230,12 +230,12 @@ body:not(.y1997-mode) .card.red-mode { border-left-color:#e53935!important; }
 body:not(.y1997-mode) .card.yellow-mode { border-left-color:#fdd835!important; }
 body:not(.y1997-mode) .card.green-mode { border-left-color:#43a047!important; }
 
-/* INFO MODAL */
+/* COMPACT INFO MODAL — NO INTERNAL SCROLL */
 #colorModal {
     display:none;
     position:fixed;
     inset:0;
-    padding:20px;
+    padding:12px;
     background:rgba(0,0,0,0.72);
     justify-content:center;
     align-items:center;
@@ -246,43 +246,40 @@ body:not(.y1997-mode) .card.green-mode { border-left-color:#43a047!important; }
 #colorModal .content {
     position:relative;
     box-sizing:border-box;
-    width:min(680px, 100%);
-    max-height:90vh;
-    overflow-y:auto;
+    width:min(940px, 100%);
+    max-height:calc(100vh - 24px);
+    overflow:hidden;
     background:white;
     color:black;
-    padding:24px;
+    padding:16px 18px 14px;
     border-radius:10px;
     box-shadow:0 12px 40px rgba(0,0,0,0.35);
+    font-size:clamp(9px, 1.55vh, 14px);
+    line-height:1.18;
 }
 
 #colorModal h2 {
-    margin:0 36px 14px 0;
+    margin:0 34px 6px 0;
+    font-size:1.45em;
+    line-height:1.1;
 }
 
 #colorModal h3 {
-    margin:22px 0 8px;
+    margin:0;
+    font-size:1.16em;
+    line-height:1.1;
 }
 
 #colorModal p {
-    margin:0 0 12px;
-    line-height:1.45;
-}
-
-#colorModal ul {
-    margin:6px 0 14px;
-    padding-left:22px;
-}
-
-#colorModal li {
-    margin:4px 0;
+    margin:0;
 }
 
 #closeModal {
     position:absolute;
-    top:12px;
-    right:16px;
+    top:7px;
+    right:10px;
     border:0;
+    padding:2px 6px;
     background:transparent;
     color:inherit;
     cursor:pointer;
@@ -290,34 +287,86 @@ body:not(.y1997-mode) .card.green-mode { border-left-color:#43a047!important; }
     line-height:1;
 }
 
-.info-status {
-    margin-top:16px;
-    padding-top:2px;
+.info-intro {
+    margin-bottom:8px!important;
+    line-height:1.25;
+}
+
+.info-columns {
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:10px;
+    align-items:stretch;
+}
+
+.info-view {
+    min-width:0;
+    padding:9px 10px;
+    border:1px solid rgba(0,0,0,0.18);
+    border-radius:8px;
+    background:rgba(0,0,0,0.025);
+}
+
+.info-view-summary {
+    margin:3px 0 6px!important;
+    opacity:0.82;
+    font-size:0.92em;
+}
+
+.info-status-block {
+    margin-top:5px;
 }
 
 .info-status-title {
-    margin:14px 0 4px;
+    margin:0 0 2px;
     font-weight:bold;
+    line-height:1.1;
+}
+
+#colorModal ul {
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:1px 16px;
+    margin:0;
+    padding-left:17px;
+}
+
+#colorModal li {
+    margin:0;
+    min-width:0;
+}
+
+.info-green-line {
+    margin:1px 0 0;
 }
 
 .info-theme-section {
-    margin-top:22px;
-    padding-top:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    margin-top:9px;
+    padding-top:8px;
     border-top:1px solid rgba(0,0,0,0.2);
+}
+
+.info-theme-section h3 {
+    margin:0;
+    white-space:nowrap;
 }
 
 .theme-switcher {
     display:flex;
     align-items:center;
-    gap:8px;
-    flex-wrap:wrap;
-    margin-top:8px;
+    justify-content:center;
+    gap:6px;
+    margin:0;
 }
 
 .theme-switcher button {
-    padding:8px 14px;
+    padding:5px 12px;
     margin:0;
-    font-size:1em;
+    font-size:0.95em;
     border-radius:6px;
     background:#eee;
     cursor:pointer;
@@ -327,6 +376,11 @@ body:not(.y1997-mode) .card.green-mode { border-left-color:#43a047!important; }
 body.dark-mode #colorModal .content {
     background:#1d1d1d!important;
     color:white!important;
+}
+
+body.dark-mode .info-view {
+    background:rgba(255,255,255,0.04);
+    border-color:#555;
 }
 
 body.dark-mode .info-theme-section {
@@ -347,6 +401,12 @@ body.y1997-mode #colorModal .content {
     font-family:"Comic Sans MS";
 }
 
+body.y1997-mode .info-view {
+    background:#000060!important;
+    border:3px inset #00ffff!important;
+    border-radius:0!important;
+}
+
 body.y1997-mode .info-theme-section {
     border-top:3px solid #00ffff;
 }
@@ -357,6 +417,35 @@ body.y1997-mode .theme-switcher button {
     border:3px outset #ff00ff!important;
     border-radius:0!important;
     font-family:"Comic Sans MS";
+}
+
+@media (max-width:620px), (max-height:620px) {
+    #colorModal {
+        padding:6px;
+    }
+
+    #colorModal .content {
+        max-height:calc(100vh - 12px);
+        padding:9px 10px 8px;
+        font-size:clamp(7px, 1.25vh, 10px);
+    }
+
+    .info-columns {
+        gap:6px;
+    }
+
+    .info-view {
+        padding:6px;
+    }
+
+    #colorModal ul {
+        gap:0 8px;
+        padding-left:13px;
+    }
+
+    .theme-switcher button {
+        padding:3px 8px;
+    }
 }
 
 /* NWS ALERT BOX */
@@ -1167,81 +1256,78 @@ populateCategoryDropdown();
 loadWeather();
 </script>
 
-<!-- INFO MODAL -->
+<!-- COMPACT INFO MODAL -->
 <div id="colorModal" role="dialog" aria-modal="true" aria-labelledby="infoTitle">
     <div class="content">
         <button id="closeModal" type="button" aria-label="Close information">×</button>
 
         <h2 id="infoTitle">Weather Impact Dashboard Information</h2>
-
-        <p>
-            This website is designed to give you an at-a-glance view of the weather
-            conditions at all sites for a chosen line of business.
+        <p class="info-intro">
+            At-a-glance weather for every site in the selected line of business. Daily focuses on current conditions; 10-Day flags conditions expected during the next 10 days.
         </p>
 
-        <p>
-            By default, the site functions in a Daily view, focusing on the current
-            weather conditions for the day.
-        </p>
+        <div class="info-columns">
+            <section class="info-view" aria-labelledby="dailyInfoTitle">
+                <h3 id="dailyInfoTitle">Daily View</h3>
+                <p class="info-view-summary">Sites are flagged when current conditions meet these rules.</p>
 
-        <p>
-            In the Daily view, sites follow the color code below and are flagged
-            accordingly when they meet any of the listed conditions.
-            
-        </p>
-        <p>
-            By selecting 10-Day, the dashboard looks 10 days into the future and
-            flags sites when they meet, or are expected to meet, any of the listed conditions.
-        </p>
+                <div class="info-status-block">
+                    <div class="info-status-title" style="color:#e53935;">RED — Severe Impact</div>
+                    <ul>
+                        <li>Temperature &lt; 10°F</li>
+                        <li>Freezing precipitation</li>
+                        <li>More than 3″ snow in 72 hrs</li>
+                        <li>Severe storms</li>
+                    </ul>
+                </div>
 
-        <div class="info-status">
-            <h3>Daily View</h3>
+                <div class="info-status-block">
+                    <div class="info-status-title" style="color:#c49b00;">YELLOW — Minor Impact</div>
+                    <ul>
+                        <li>Light snow</li>
+                        <li>Fog / visibility issues</li>
+                        <li>Rain + freezing-risk temps</li>
+                        <li>Any active NWS alert</li>
+                    </ul>
+                </div>
 
-            <div class="info-status-title" style="color:#e53935;">RED — Severe Impact</div>
-            <ul>
-                <li>Temperature less than 10°F</li>
-                <li>Freezing precipitation</li>
-                <li>More than 3 inches of snowfall in the last 72 hours</li>
-                <li>Severe storms</li>
-            </ul>
+                <div class="info-status-block">
+                    <div class="info-status-title" style="color:#43a047;">GREEN — No Impact</div>
+                    <p class="info-green-line">No issues.</p>
+                </div>
+            </section>
 
-            <div class="info-status-title" style="color:#c49b00;">YELLOW — Minor Impact</div>
-            <ul>
-                <li>Light snow</li>
-                <li>Fog or visibility issues</li>
-                <li>Rain with freezing-risk temperatures</li>
-                <li>Any active NWS alert</li>
-            </ul>
+            <section class="info-view" aria-labelledby="tenDayInfoTitle">
+                <h3 id="tenDayInfoTitle">10-Day View</h3>
+                <p class="info-view-summary">Sites are flagged when forecast conditions meet these rules.</p>
 
-            <div class="info-status-title" style="color:#43a047;">GREEN — No Impact</div>
-            <ul>
-                <li>No issues</li>
-            </ul>
-        </div>
+                <div class="info-status-block">
+                    <div class="info-status-title" style="color:#e53935;">RED — Severe Weather</div>
+                    <ul>
+                        <li>Freezing precipitation</li>
+                        <li>Heavy snow or storms</li>
+                        <li>Temperatures ≤ 10°F</li>
+                    </ul>
+                </div>
 
-        <div class="info-status">
-            <h3>10-Day View</h3>
+                <div class="info-status-block">
+                    <div class="info-status-title" style="color:#c49b00;">YELLOW — Moderate Risk</div>
+                    <ul>
+                        <li>Light snow</li>
+                        <li>Fog</li>
+                        <li>Freeze-risk temps + rain</li>
+                        <li>Any active NWS alert</li>
+                    </ul>
+                </div>
 
-            <div class="info-status-title" style="color:#e53935;">RED — Severe Weather in the Next 10 Days</div>
-            <ul>
-                <li>Freezing precipitation</li>
-                <li>Heavy snow or storms</li>
-                <li>Temperatures at or below 10°F</li>
-            </ul>
-
-            <div class="info-status-title" style="color:#c49b00;">YELLOW — Moderate Risk</div>
-            <ul>
-                <li>Light snow</li>
-                <li>Fog</li>
-                <li>Freezing-risk temperatures with rain</li>
-                <li>Any active NWS alert</li>
-            </ul>
-
-            <div class="info-status-title" style="color:#43a047;">GREEN — No Expected Issues</div>
+                <div class="info-status-block">
+                    <div class="info-status-title" style="color:#43a047;">GREEN — No Expected Issues</div>
+                </div>
+            </section>
         </div>
 
         <div class="info-theme-section">
-            <h3>Theme</h3>
+            <h3>Theme:</h3>
             <div class="theme-switcher" aria-label="Theme controls">
                 <button type="button" onclick="setTheme('light')">Light</button>
                 <button type="button" onclick="setTheme('dark')">Dark</button>
