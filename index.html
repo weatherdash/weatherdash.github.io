@@ -200,6 +200,175 @@ body.y1997-mode .pill-option { color:#0000ff!important; }
     flex:0 0 auto;
 }
 
+
+/* GAME BOY EASTER EGG
+   Type "Gameboy" anywhere on the page to reveal this card.
+*/
+.gameboy-card {
+    position:relative;
+    min-height:390px;
+    border-left-color:#306230!important;
+    background:linear-gradient(180deg, #f7f8ee 0%, #e4e8d2 100%);
+    color:#17210f;
+    overflow:hidden;
+}
+
+.gameboy-card.gameboy-pop {
+    animation:gameboyCardPop 0.32s ease-out both;
+}
+
+@keyframes gameboyCardPop {
+    from { opacity:0; transform:translateY(-14px) scale(0.96); }
+    to { opacity:1; transform:translateY(0) scale(1); }
+}
+
+.gameboy-header {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:1.4em;
+    margin-bottom:0.35em;
+    padding:0 1.7em;
+    font-size:1.18em;
+    font-weight:bold;
+    letter-spacing:0.04em;
+    text-align:center;
+}
+
+.gameboy-close {
+    position:absolute;
+    top:0.35em;
+    right:0.45em;
+    width:1.7em;
+    height:1.7em;
+    padding:0!important;
+    border:1px solid rgba(0,0,0,0.35);
+    border-radius:50%;
+    background:rgba(255,255,255,0.72);
+    color:#17210f;
+    cursor:pointer;
+    font:inherit;
+    font-weight:bold;
+    line-height:1;
+    z-index:3;
+}
+
+.gameboy-screen-zone {
+    flex:0 0 auto;
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    min-height:62%;
+    padding:0.25em 0 0.7em;
+}
+
+.gameboy-screen-frame {
+    width:min(100%, 285px);
+    aspect-ratio:1 / 1;
+    box-sizing:border-box;
+    overflow:hidden;
+    border:0.55em solid #30382b;
+    border-radius:0.75em 0.75em 1.5em 0.75em;
+    background:#0f1708;
+    box-shadow:
+        inset 0 0 0 2px rgba(255,255,255,0.08),
+        0 5px 14px rgba(0,0,0,0.28);
+}
+
+.gameboy-screen-frame iframe {
+    display:block;
+    width:100%;
+    height:100%;
+    border:0;
+    background:#0b0f08;
+}
+
+.gameboy-screen-message {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-sizing:border-box;
+    width:100%;
+    height:100%;
+    padding:1em;
+    color:#c9d8aa;
+    font-size:0.86em;
+    line-height:1.35;
+    text-align:center;
+}
+
+.gameboy-controls {
+    flex:1 1 auto;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    margin-top:0.2em;
+    padding:0.7em 0.8em;
+    border-top:1px solid rgba(23,33,15,0.22);
+    background:rgba(255,255,255,0.35);
+    font-size:0.82em;
+    line-height:1.38;
+    text-align:center;
+}
+
+.gameboy-controls-title {
+    margin-bottom:0.25em;
+    font-weight:bold;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+}
+
+.gameboy-controls-line {
+    white-space:normal;
+}
+
+.gameboy-rom-name {
+    margin-top:0.35em;
+    opacity:0.72;
+    font-size:0.9em;
+}
+
+body.dark-mode .gameboy-card {
+    background:linear-gradient(180deg, #242a20 0%, #171b15 100%)!important;
+    color:#e7efd7!important;
+    border-left-color:#8bac0f!important;
+}
+
+body.dark-mode .gameboy-controls {
+    background:rgba(255,255,255,0.04);
+    border-top-color:#4e5c43;
+}
+
+body.dark-mode .gameboy-close {
+    background:#333!important;
+    color:#eee!important;
+    border-color:#777!important;
+}
+
+body.y1997-mode .gameboy-card {
+    background:#c0c0c0!important;
+    color:#000080!important;
+    border:5px outset #00ffff!important;
+}
+
+body.y1997-mode .gameboy-screen-frame {
+    border:6px inset #ff00ff!important;
+    border-radius:0!important;
+}
+
+body.y1997-mode .gameboy-controls {
+    background:#ffff00!important;
+    color:#0000ff!important;
+    border-top:4px outset #ff00ff!important;
+}
+
+body.y1997-mode .gameboy-close {
+    background:#00ffff!important;
+    color:#0000ff!important;
+    border:3px outset #ff00ff!important;
+    border-radius:0!important;
+}
+
 /* DARK MODE */
 body.dark-mode { background:#121212!important; color:#e6e6e6!important; }
 body.dark-mode .card { background:#1c1c1c!important; color:#f0f0f0!important; }
@@ -568,6 +737,17 @@ const IMPACT_RULES = {
    For an ambiguous city, add a ZIP code:
 
        springfieldMO: {name:"Springfield, MO", zip:"65806"},
+
+   If the display name is not a normal "City, ST" name, provide search/state:
+
+       denverOffice: {name:"Denver Office", search:"Denver", state:"CO"},
+
+   Manual coordinates are still supported as an optional override:
+
+       remoteOffice: {name:"Remote Office", lat:39.7392, lon:-104.9903},
+
+   Existing sites keep their known coordinates for maximum speed. New sites
+   may omit lat/lon and will be geocoded automatically.
 ========================= */
 const SITES = {
     albanyNY:          {name:"Albany, NY", lat:42.6526, lon:-73.7562},
@@ -600,9 +780,7 @@ const SITES = {
     stPetersburgFL:    {name:"St. Petersburg, FL", lat:27.767, lon:-82.640},
     vancouverWA:       {name:"Vancouver, WA", lat:45.6366, lon:-122.6615},
     westColumbiaSC:    {name:"West Columbia, SC", lat:33.994, lon:-81.074},
-    zanesvilleOH:      {name:"Zanesville, OH", lat:39.9403, lon:-82.0132},
-    bonnievilleKY:     {name:"Bonnieville, KY"},
-    jackpotNV:         {name:"Jackpot, NV"}
+    zanesvilleOH:      {name:"Zanesville, OH", lat:39.9403, lon:-82.0132}
 };
 
 /* =========================
@@ -666,15 +844,9 @@ const SITE_CATEGORIES = {
             "bridgetonMO", "cantonOH", "cheektowagaNY", "columbusOH",
             "elPasoTX", "flushingNY", "greensboroNC", "louisvilleKY",
             "middletownNY", "morrisvilleNC", "orlandoFL", "sanAntonioTX",
-            "stPetersburgFL"]
-    },
-    
-    testingSupport: {
-        label: "Placeholder",
-        siteIds: [
-            "bonnievilleKY","jackpotNV"]
-    },
-
+            "stPetersburgFL"
+        ]
+    }
 };
 
 function getCategorySites(categoryKey){
@@ -700,6 +872,20 @@ let activeLoadController = null;
 
 const weatherCache = new Map();
 const nwsCache = new Map();
+
+/* =========================
+   GAME BOY EASTER EGG
+
+   Upload either game.gb or game.gbc beside index.html on GitHub Pages.
+   Type the word "Gameboy" anywhere on the dashboard to reveal the player.
+========================= */
+const GAMEBOY_SECRET_WORD = "gameboy";
+const GAMEBOY_ROM_FILES = ["game.gb", "game.gbc"];
+const GAMEBOY_EMULATOR_DATA = "https://cdn.emulatorjs.org/stable/data/";
+
+let gameboyUnlocked = false;
+let gameboyKeyBuffer = "";
+let gameboyRomUrlPromise = null;
 const geocodeMemoryCache = new Map();
 const geocodeInFlight = new Map();
 
@@ -929,9 +1115,8 @@ async function resolveSiteLocation(site, signal){
         return {...site, ...storedHit};
     }
 
-    const existingLookup = geocodeInFlight.get(site.id);
-    if(existingLookup && existingLookup.signal === signal && !signal.aborted){
-        const sharedCoordinates = await existingLookup.promise;
+    if(geocodeInFlight.has(site.id)){
+        const sharedCoordinates = await geocodeInFlight.get(site.id);
         return {...site, ...sharedCoordinates};
     }
 
@@ -942,13 +1127,10 @@ async function resolveSiteLocation(site, signal){
             return coordinates;
         })
         .finally(() => {
-            const currentLookup = geocodeInFlight.get(site.id);
-            if(currentLookup?.promise === lookupPromise){
-                geocodeInFlight.delete(site.id);
-            }
+            geocodeInFlight.delete(site.id);
         });
 
-    geocodeInFlight.set(site.id, {promise:lookupPromise, signal});
+    geocodeInFlight.set(site.id, lookupPromise);
     const coordinates = await lookupPromise;
     return {...site, ...coordinates};
 }
@@ -1288,10 +1470,8 @@ function renderWeatherCard(card, loc, data, expectedRunId, signal){
 }
 
 async function loadWeatherCard(card, loc, expectedRunId, signal){
-    let resolvedLoc = null;
-
     try{
-        resolvedLoc = await resolveSiteLocation(loc, signal);
+        const resolvedLoc = await resolveSiteLocation(loc, signal);
         if(expectedRunId !== loadRunId) return;
 
         const data = await fetchWeatherData(resolvedLoc, signal);
@@ -1310,7 +1490,7 @@ async function loadWeatherCard(card, loc, expectedRunId, signal){
         alert.className = "alert-box";
 
         const label = document.createElement("b");
-        const isLocationError = !resolvedLoc;
+        const isLocationError = !Number.isFinite(Number(loc.lat)) || !Number.isFinite(Number(loc.lon));
         label.textContent = isLocationError ? "Location unavailable: " : "Weather unavailable: ";
 
         const message = isLocationError
@@ -1320,23 +1500,171 @@ async function loadWeatherCard(card, loc, expectedRunId, signal){
         alert.append(label, document.createTextNode(message));
         card.append(city, alert);
 
-        if(resolvedLoc){
-            const info = document.createElement("div");
-            info.style.cssText = "font-size:0.85em;margin-top:8px;";
-
-            const link = document.createElement("a");
-            link.target = "_blank";
-            link.rel = "noopener noreferrer";
-            link.href = `https://forecast.weather.gov/MapClick.php?lat=${resolvedLoc.lat}&lon=${resolvedLoc.lon}`;
-            link.textContent = "More info";
-
-            info.append(link);
-            card.append(info);
-        }
-
         console.error(`Weather load failed for ${loc.name}`, error);
     }
 }
+
+/* =========================
+   GAME BOY EASTER EGG PLAYER
+========================= */
+async function findHostedGameBoyRom(){
+    if(gameboyRomUrlPromise) return gameboyRomUrlPromise;
+
+    gameboyRomUrlPromise = (async () => {
+        for(const filename of GAMEBOY_ROM_FILES){
+            const url = new URL(filename, window.location.href).href;
+
+            try{
+                const response = await fetch(url, {
+                    method: "HEAD",
+                    cache: "no-store"
+                });
+
+                if(response.ok){
+                    return {url, filename};
+                }
+            }catch(error){
+                console.warn(`Could not check for ${filename}`, error);
+            }
+        }
+
+        return null;
+    })();
+
+    return gameboyRomUrlPromise;
+}
+
+function buildGameBoyPlayerDocument(rom){
+    const romUrl = JSON.stringify(rom.url);
+    const romName = JSON.stringify(rom.filename.replace(/\.(gb|gbc)$/i, ""));
+    const dataPath = JSON.stringify(GAMEBOY_EMULATOR_DATA);
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<style>
+html,body,#game{width:100%;height:100%;margin:0;overflow:hidden;background:#0b0f08;}
+body{font-family:Arial,sans-serif;}
+</style>
+</head>
+<body>
+<div id="game"></div>
+<script>
+window.EJS_player = "#game";
+window.EJS_core = "gb";
+window.EJS_gameUrl = ${romUrl};
+window.EJS_gameName = ${romName};
+window.EJS_pathtodata = ${dataPath};
+window.EJS_language = "en-US";
+window.EJS_color = "#8bac0f";
+window.EJS_backgroundColor = "#0b0f08";
+window.EJS_alignStartButton = "center";
+window.EJS_startOnLoaded = false;
+window.EJS_controlScheme = "gb";
+<\/script>
+<script src="https://cdn.emulatorjs.org/stable/data/loader.js"><\/script>
+</body>
+</html>`;
+}
+
+async function loadGameBoyPlayer(card){
+    const screenFrame = card.querySelector(".gameboy-screen-frame");
+    const romLabel = card.querySelector(".gameboy-rom-name");
+    if(!screenFrame) return;
+
+    const rom = await findHostedGameBoyRom();
+
+    if(!card.isConnected || !gameboyUnlocked) return;
+
+    if(!rom){
+        screenFrame.innerHTML = `
+            <div class="gameboy-screen-message">
+                No ROM found.<br><br>
+                Upload <b>game.gb</b> or <b>game.gbc</b> to the same GitHub folder as <b>index.html</b>.
+            </div>
+        `;
+        if(romLabel) romLabel.textContent = "Waiting for game.gb or game.gbc";
+        return;
+    }
+
+    const frame = document.createElement("iframe");
+    frame.title = "Game Boy emulator";
+    frame.allow = "autoplay; fullscreen; gamepad";
+    frame.setAttribute("allowfullscreen", "");
+    frame.srcdoc = buildGameBoyPlayerDocument(rom);
+
+    screenFrame.replaceChildren(frame);
+    if(romLabel) romLabel.textContent = `ROM: ${rom.filename}`;
+}
+
+function createGameBoyCard(){
+    const card = document.createElement("article");
+    card.id = "gameboyCard";
+    card.className = "card gameboy-card gameboy-pop";
+    card.innerHTML = `
+        <button class="gameboy-close" type="button" aria-label="Close Game Boy">×</button>
+        <div class="gameboy-header">GAME BOY</div>
+
+        <div class="gameboy-screen-zone">
+            <div class="gameboy-screen-frame">
+                <div class="gameboy-screen-message">Looking for game.gb or game.gbc…</div>
+            </div>
+        </div>
+
+        <div class="gameboy-controls">
+            <div class="gameboy-controls-title">Keyboard Controls</div>
+            <div class="gameboy-controls-line">Arrow keys: D-pad</div>
+            <div class="gameboy-controls-line">Z: A &nbsp;•&nbsp; X: B</div>
+            <div class="gameboy-controls-line">Enter: Start &nbsp;•&nbsp; V: Select</div>
+            <div class="gameboy-controls-line">Click the emulator first to enable input and sound.</div>
+            <div class="gameboy-rom-name">Loading ROM…</div>
+        </div>
+    `;
+
+    card.querySelector(".gameboy-close").addEventListener("click", () => {
+        gameboyUnlocked = false;
+        card.remove();
+        updateSiteGridLayout();
+    });
+
+    loadGameBoyPlayer(card);
+    return card;
+}
+
+function revealGameBoyCard(){
+    gameboyUnlocked = true;
+
+    const grid = document.getElementById("weatherGrid");
+    if(!grid) return;
+
+    let card = document.getElementById("gameboyCard");
+    if(!card){
+        card = createGameBoyCard();
+        grid.prepend(card);
+    }
+
+    updateSiteGridLayout();
+
+    requestAnimationFrame(() => {
+        card.scrollIntoView({behavior:"smooth", block:"center", inline:"center"});
+    });
+}
+
+document.addEventListener("keydown", event => {
+    if(gameboyUnlocked) return;
+    if(event.ctrlKey || event.metaKey || event.altKey) return;
+    if(event.key.length !== 1) return;
+
+    gameboyKeyBuffer = (gameboyKeyBuffer + event.key.toLowerCase())
+        .slice(-GAMEBOY_SECRET_WORD.length);
+
+    if(gameboyKeyBuffer === GAMEBOY_SECRET_WORD){
+        gameboyKeyBuffer = "";
+        revealGameBoyCard();
+    }
+});
 
 /* =========================
    TWO-ROW GRID LAYOUT
@@ -1348,7 +1676,8 @@ function updateSiteGridLayout(){
     const grid = document.getElementById("weatherGrid");
     if(!grid) return;
 
-    const siteCount = Math.max(1, currentGroup.length);
+    const intendedCardCount = currentGroup.length + (gameboyUnlocked ? 1 : 0);
+    const siteCount = Math.max(1, grid.children.length, intendedCardCount);
 
     requestAnimationFrame(() => {
         const gridWidth = Math.max(1, grid.clientWidth);
@@ -1412,7 +1741,18 @@ async function loadWeather(){
     const runId = ++loadRunId;
 
     const grid = document.getElementById("weatherGrid");
-    grid.innerHTML = "";
+
+    /* Keep the Game Boy player alive while replacing weather cards. */
+    Array.from(grid.children).forEach(child => {
+        if(!child.classList.contains("gameboy-card")){
+            child.remove();
+        }
+    });
+
+    if(gameboyUnlocked && !document.getElementById("gameboyCard")){
+        grid.prepend(createGameBoyCard());
+    }
+
     updateSiteGridLayout();
 
     const cards = currentGroup.map(loc => {
@@ -1573,6 +1913,7 @@ loadWeather();
 
                 <div class="info-status-block">
                     <div class="info-status-title" style="color:#43a047;">GREEN — No Impact</div>
+                    <p class="info-green-line">No issues.</p>
                 </div>
             </section>
 
@@ -1642,11 +1983,6 @@ document.addEventListener("keydown", (event) => {
         closeInfoModal();
     }
 });
-</script>
-
-
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8333736812812145"
- crossorigin="anonymous"></script>
 
 </body>
 </html>
