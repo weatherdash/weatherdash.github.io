@@ -1,8 +1,7 @@
 Site Update Instructions:
 
-
 Adding/Removing Sites
-
+----------------------
 Step 1: Open index.html and click the pencil in the top right to edit the file. 
 
 Step 2: Scroll to line 572 and you will see the site registry list.
@@ -24,4 +23,28 @@ NOTE: Latitude and Longitude numbers are not needed for new sites.
 From there you can add them to a category. 
 
 
-Adding/Removing Categories:
+Adding/Removing Categories
+---------------------------
+
+This is a similar process to adding sites
+
+At line 537, you will see the category block.
+
+You add a new line, and add the category, the label, then the site ids created in the previous step, again ensuring that the formatting is correct.
+
+In the example below I'm adding a tester site with Bonnieville, KY and West Columbia, SC.
+
+const SITE_CATEGORIES = {
+    accountManagement:{label:"Account Management",siteIds:["albanyNY","charlotteNC","cincinnatiOH","coloradoSpringsCO","fondDuLacWI","irvingTX","mcAllenTX","portlandOR","rochesterNY","vancouverWA","zanesvilleOH"]},
+    accountManagementChat:{label:"Account Management Chat",siteIds:["elPasoTX","rochesterNY","zanesvilleOH"]},
+    crcs:{label:"CRCS",siteIds:["morrisvilleNC"]},
+    mobileBilling:{label:"Mobile Billing",siteIds:["albanyNY","mcAllenTX","rochesterNY","vancouverWA"]},
+    mobileRepair:{label:"Mobile Repair",siteIds:["amherstNY","clevelandOH","kansasCityMO","mcAllenTX","stPetersburgFL"]},
+    repairChat:{label:"Repair Chat",siteIds:["bridgetonMO","elPasoTX","louisvilleKY","morrisvilleNC"]},
+    scsEnglishBilling:{label:"SCS English Billing",siteIds:["greensboroNC","sanDiegoCA"]},
+    serviceability:{label:"Serviceability",siteIds:["sanAntonioTX","stAnnMO","westColumbiaSC"]},
+    smbSpb:{label:"SMB/SPB",siteIds:["charlotteNC","louisvilleKY","austinTX"]},
+    technicalSupport:{label:"Technical Support",siteIds:["bridgetonMO","cantonOH","cheektowagaNY","columbusOH","elPasoTX","flushingNY","greensboroNC","louisvilleKY","middletownNY","morrisvilleNC","orlandoFL","sanAntonioTX","stPetersburgFL"]}
+    tester:{label:"Testing Sites",siteIds:["bonnievilleKY", "westColumbiaSC"]}
+};
+
