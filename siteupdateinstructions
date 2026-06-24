@@ -48,3 +48,4 @@ const SITE_CATEGORIES = {
     tester:{label:"Testing Sites",siteIds:["bonnievilleKY", "westColumbiaSC"]}
 };
 
+As a bonus, type the word "gameboy" on any screen to play a gameboy game. To change the rom, replace the game.gb rom with the public domain gameboy rom of your choice.
